@@ -1,0 +1,305 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Tenant model for multi-tenancy
+model Tenant {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  users        User[]
+  clients      Client[]
+  declarations Declaration[]
+  livres       Livre[]
+  tasks        Task[]
+}
+
+// User model
+model User {
+  id         String    @id @default(uuid())
+  tenantId   String?
+  roleId     String
+  username   String
+  email      String    @unique
+  password   String
+  imageUrl   String?
+  isActive   Boolean   @default(true)
+  lastLogin  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // Relationships
+  tenant             Tenant?            @relation(fields: [tenantId], references: [id])
+  role               Role               @relation(fields: [roleId], references: [id])
+  declarations       Declaration[]
+  livres             Livre[]
+  tasks              Task[]
+  clientAssignments  ClientAssignment[]
+}
+
+// Role model
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+
+  // Relationships
+  users             User[]
+  rolePermissions   RolePermission[]
+}
+
+// Permission model
+model Permission {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+
+  // Relationships
+  rolePermissions   RolePermission[]
+}
+
+// RolePermission model (many-to-many relationship between Role and Permission)
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  permissionId String
+
+  // Relationships
+  role         Role       @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+}
+
+// Client model
+model Client {
+  id                String   @id @default(uuid())
+  tenantId          String
+  name              String
+  email             String?
+  phone             String?
+  type              ClientType
+  isActive          Boolean  @default(true)
+  ice               String?
+  if                String?
+  loginDGI          String?
+  passwordDGI       String?
+  loginDAMNCOM      String?
+  passwordDAMNCOM   String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relationships
+  tenant             Tenant              @relation(fields: [tenantId], references: [id])
+  declarations       Declaration[]
+  livres             Livre[]
+  clientAssignments  ClientAssignment[]
+}
+
+// ClientAssignment model
+model ClientAssignment {
+  id        String   @id @default(uuid())
+  clientId  String
+  userId    String
+
+  // Relationships
+  client            Client             @relation(fields: [clientId], references: [id])
+  user              User               @relation(fields: [userId], references: [id])
+  clientPermissions ClientPermission[]
+
+  @@unique([clientId, userId])
+}
+
+// ClientPermission model
+model ClientPermission {
+  id                 String           @id @default(uuid())
+  clientAssignmentId String
+  permission         PermissionType
+
+  // Relationships
+  clientAssignment   ClientAssignment @relation(fields: [clientAssignmentId], references: [id])
+}
+
+// DeclarationType model
+model DeclarationType {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  articles    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  declarationMonths DeclarationMonth[]
+  declarations      Declaration[]
+}
+
+// DeclarationMonth model
+model DeclarationMonth {
+  id                String          @id @default(uuid())
+  month             Int
+  declarationTypeId String
+
+  // Relationships
+  declarationType   DeclarationType @relation(fields: [declarationTypeId], references: [id])
+
+  @@unique([month, declarationTypeId])
+}
+
+// Declaration model
+model Declaration {
+  id                String            @id @default(uuid())
+  declarationTypeId String
+  clientId          String
+  status            DeclarationStatus
+  createdAt         DateTime          @default(now())
+  declarationMonth  Int
+  sendDate          DateTime?
+  authorizationFile String?
+  dateTD            DateTime?
+  fileTD            String?
+  dateTP            DateTime?
+  fileTP            String?
+  observation       String?
+  updatedAt         DateTime          @updatedAt
+  tenantId          String
+  userId            String
+
+  // Relationships
+  declarationType   DeclarationType @relation(fields: [declarationTypeId], references: [id])
+  client            Client          @relation(fields: [clientId], references: [id])
+  tenant            Tenant          @relation(fields: [tenantId], references: [id])
+  user              User            @relation(fields: [userId], references: [id])
+  attachments       Attachment[]
+}
+
+// LivreType model
+model LivreType {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  articles    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  livreMonths LivreMonth[]
+  livres      Livre[]
+}
+
+// LivreMonth model
+model LivreMonth {
+  id          String    @id @default(uuid())
+  month       Int
+  livreTypeId String
+
+  // Relationships
+  livreType   LivreType @relation(fields: [livreTypeId], references: [id])
+
+  @@unique([month, livreTypeId])
+}
+
+// Livre model
+model Livre {
+  id          String      @id @default(uuid())
+  livreTypeId String
+  clientId    String
+  status      LivreStatus
+  createdAt   DateTime    @default(now())
+  livreMonth  Int
+  sendDate    DateTime?
+  data        Json?
+  observation String?
+  updatedAt   DateTime    @updatedAt
+  tenantId    String
+  userId      String
+
+  // Relationships
+  livreType    LivreType   @relation(fields: [livreTypeId], references: [id])
+  client       Client      @relation(fields: [clientId], references: [id])
+  tenant       Tenant      @relation(fields: [tenantId], references: [id])
+  user         User        @relation(fields: [userId], references: [id])
+  attachments  Attachment[]
+}
+
+// Attachment model
+model Attachment {
+  id            String  @id @default(uuid())
+  declarationId String?
+  livreId       String?
+  fileName      String
+  fileUrl       String
+  createdAt     DateTime @default(now())
+
+  // Relationships
+  declaration   Declaration? @relation(fields: [declarationId], references: [id])
+  livre         Livre?       @relation(fields: [livreId], references: [id])
+}
+
+// Task model
+model Task {
+  id          String     @id @default(uuid())
+  userId      String
+  tenantId    String
+  title       String
+  description String?
+  status      TaskStatus
+  dueDate     DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relationships
+  user        User       @relation(fields: [userId], references: [id])
+  tenant      Tenant     @relation(fields: [tenantId], references: [id])
+}
+
+// Enums
+enum ClientType {
+  PERSONNE_MORALE
+  PERSONNE_PHYSIQUE
+}
+
+enum PermissionType {
+  READ
+  WRITE
+  DELETE
+  SUBMIT
+  APPROVE
+}
+
+enum DeclarationStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum LivreStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}

@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: sracom-postgres
+    restart: always
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sracom_compta
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: sracom-backend
+    restart: always
+    ports:
+      - '3000:3000'
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/sracom_compta?schema=public
+      NODE_ENV: development
+      JWT_SECRET: "1b2e70e523258d013689826b2115dc64bb4e4b9036825d02fbaef4f7c538e20fe33ee5a6964959a58cc4d9032c2d4330e89d295cecd7ade90c9ff4d1b3985532efb919c7f1267f75da503177aa7beaa8447cad1631252ef784f5a23f4fd53877f4bc56dfc805ce7c5b6a618cbe5b1dffd6ef71d0ac502249c2d15cb2ce8caddefe6dff42662c8034f4f0bc51dd7ee1bd4952b99daf7abba030e7109762fc66beab8c9a6fa18ccff927f7230b13fb07dbf33aa331fa1d84942217aba6870192260c3bbe47ac0af0f50458a06db2e45c1525a33fd2bb2bd4315d107a71944f338d5a5aa4d8b9a9ae61e198e4ec3c96f0504f00802e49445ed5a1fadc184de44ef6"
+      JWT_EXPIRES_IN: 1d
+      JWT_REFRESH_SECRET: "e7be5e2c9c188af013c28b19adfc3d915335082ca95e611817770e472bad71ef5c2ab07940448a26af8e88cf77f33f777f0bf6f95a1c038983ca515da9d87bc6e17ae8c0be2fb3e2160784b5b0feda2bf1cf9fd102dac1807c3d4c8e731b1ee77100eb5623bedd2c315e3b372d80b32528abf644116a140adc5cb8891ca6fa8c453d0312c2a1b56b8c3c4c0379fe355d8b690737b104235ca0fa61ff51a43bbc6180febf331d4d0a1fbaa2e095bd4ff26745d54da53eb0bc7a104e014f3c14463f16b5c6696363dd51a26254c56acd56f73d43d1393ce1bd7cbb15d38a050bc5d95cdc095a8341e9fd1236029487add102cb131d048fa8b23c95d8f39b3e94e2"
+      JWT_REFRESH_EXPIRES_IN: 7d
+      PORT: 3000
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: sracom-frontend
+    restart: always
+    ports:
+      - '3001:3000'
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:3000/api
+      NEXT_TELEMETRY_DISABLED: 1
+
+volumes:
+  postgres-data:
