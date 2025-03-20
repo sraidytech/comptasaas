@@ -1,6 +1,8 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { RoleRedirect } from "@/components/auth/role-redirect";
+import { LogoutButton } from "@/components/auth/logout-button";
 
 export const metadata: Metadata = {
   title: "Dashboard - SRACOM COMPTA",
@@ -13,6 +15,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
+    <RoleRedirect>
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
       <aside className="w-64 bg-white shadow-md">
@@ -68,11 +71,9 @@ export default function DashboardLayout({
             <h2 className="text-xl font-semibold">Dashboard</h2>
             <div className="flex items-center space-x-4">
               <Button variant="outline" size="sm">
-                Profile
+                Profil
               </Button>
-              <Button variant="outline" size="sm">
-                Logout
-              </Button>
+              <LogoutButton />
             </div>
           </div>
         </header>
@@ -83,5 +84,6 @@ export default function DashboardLayout({
         </main>
       </div>
     </div>
+    </RoleRedirect>
   );
 }

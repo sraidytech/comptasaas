@@ -10,6 +10,7 @@ import { CommonModule } from './common/common.module';
 import { SharedAuthModule } from './auth/shared';
 import { TenantIsolationMiddleware } from './common';
 import { ClientsModule } from './clients/clients.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { ClientsModule } from './clients/clients.module';
     UsersModule,
     UsersControllerModule,
     ClientsModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

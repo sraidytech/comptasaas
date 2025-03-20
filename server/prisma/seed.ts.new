@@ -1,0 +1,653 @@
+import { PrismaClient, PermissionCategory } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
+
+const prisma = new PrismaClient();
+
+async function main() {
+  // Create system roles
+  const superAdminRole = await prisma.role.upsert({
+    where: { name: 'SUPER_ADMIN' },
+    update: {},
+    create: {
+      name: 'SUPER_ADMIN',
+      description: 'Super administrator role with unrestricted access across all tenants',
+    },
+  });
+
+  console.log('Created/Updated super admin role:', superAdminRole);
+
+  const adminRole = await prisma.role.upsert({
+    where: { name: 'ADMIN' },
+    update: {},
+    create: {
+      name: 'ADMIN',
+      description: 'Administrator role with full access within a tenant',
+    },
+  });
+
+  console.log('Created/Updated admin role:', adminRole);
+
+  const teamManagerRole = await prisma.role.upsert({
+    where: { name: 'TEAM_MANAGER' },
+    update: {},
+    create: {
+      name: 'TEAM_MANAGER',
+      description: 'Team manager role with ability to manage a team of employees',
+    },
+  });
+
+  console.log('Created/Updated team manager role:', teamManagerRole);
+
+  const employeeRole = await prisma.role.upsert({
+    where: { name: 'EMPLOYEE' },
+    update: {},
+    create: {
+      name: 'EMPLOYEE',
+      description: 'Regular employee with limited access',
+    },
+  });
+
+  console.log('Created/Updated employee role:', employeeRole);
+
+  // Create permissions
+  const permissions = [
+    // User Management Permissions
+    {
+      name: 'user:create',
+      description: 'Create new users',
+      category: PermissionCategory.USER_MANAGEMENT,
+    },
+    {
+      name: 'user:read',
+      description: 'View user details',
+      category: PermissionCategory.USER_MANAGEMENT,
+    },
+    {
+      name: 'user:update',
+      description: 'Update user details',
+      category: PermissionCategory.USER_MANAGEMENT,
+    },
+    {
+      name: 'user:delete',
+      description: 'Delete users',
+      category: PermissionCategory.USER_MANAGEMENT,
+    },
+    {
+      name: 'user:assign-role',
+      description: 'Assign roles to users',
+      category: PermissionCategory.USER_MANAGEMENT,
+    },
+    {
+      name: 'user:manage-permissions',
+      description: 'Manage user permissions',
+      category: PermissionCategory.USER_MANAGEMENT,
+    },
+    {
+      name: 'user:reset-password',
+      description: 'Reset user passwords',
+      category: PermissionCategory.USER_MANAGEMENT,
+    },
+
+    // Client Management Permissions
+    {
+      name: 'client:create',
+      description: 'Create new client records',
+      category: PermissionCategory.CLIENT_MANAGEMENT,
+    },
+    {
+      name: 'client:read',
+      description: 'View client records',
+      category: PermissionCategory.CLIENT_MANAGEMENT,
+    },
+    {
+      name: 'client:update',
+      description: 'Update client records',
+      category: PermissionCategory.CLIENT_MANAGEMENT,
+    },
+    {
+      name: 'client:delete',
+      description: 'Delete client records',
+      category: PermissionCategory.CLIENT_MANAGEMENT,
+    },
+    {
+      name: 'client:assign',
+      description: 'Assign client records to users',
+      category: PermissionCategory.CLIENT_MANAGEMENT,
+    },
+    {
+      name: 'client:manage-credentials',
+      description: 'Manage client credentials for external systems',
+      category: PermissionCategory.CLIENT_MANAGEMENT,
+    },
+
+    // Declaration Management Permissions
+    {
+      name: 'declaration-type:create',
+      description: 'Create declaration types',
+      category: PermissionCategory.DECLARATION_MANAGEMENT,
+    },
+    {
+      name: 'declaration-type:read',
+      description: 'View declaration types',
+      category: PermissionCategory.DECLARATION_MANAGEMENT,
+    },
+    {
+      name: 'declaration-type:update',
+      description: 'Update declaration types',
+      category: PermissionCategory.DECLARATION_MANAGEMENT,
+    },
+    {
+      name: 'declaration-type:delete',
+      description: 'Delete declaration types',
+      category: PermissionCategory.DECLARATION_MANAGEMENT,
+    },
+    {
+      name: 'declaration:create',
+      description: 'Create declarations',
+      category: PermissionCategory.DECLARATION_MANAGEMENT,
+    },
+    {
+      name: 'declaration:read',
+      description: 'View declarations',
+      category: PermissionCategory.DECLARATION_MANAGEMENT,
+    },
+    {
+      name: 'declaration:update',
+      description: 'Update declarations',
+      category: PermissionCategory.DECLARATION_MANAGEMENT,
+    },
+    {
+      name: 'declaration:delete',
+      description: 'Delete declarations',
+      category: PermissionCategory.DECLARATION_MANAGEMENT,
+    },
+    {
+      name: 'declaration:submit',
+      description: 'Submit declarations',
+      category: PermissionCategory.DECLARATION_MANAGEMENT,
+    },
+    {
+      name: 'declaration:approve',
+      description: 'Approve declarations',
+      category: PermissionCategory.DECLARATION_MANAGEMENT,
+    },
+
+    // Livre Management Permissions
+    {
+      name: 'livre-type:create',
+      description: 'Create livre types',
+      category: PermissionCategory.LIVRE_MANAGEMENT,
+    },
+    {
+      name: 'livre-type:read',
+      description: 'View livre types',
+      category: PermissionCategory.LIVRE_MANAGEMENT,
+    },
+    {
+      name: 'livre-type:update',
+      description: 'Update livre types',
+      category: PermissionCategory.LIVRE_MANAGEMENT,
+    },
+    {
+      name: 'livre-type:delete',
+      description: 'Delete livre types',
+      category: PermissionCategory.LIVRE_MANAGEMENT,
+    },
+    {
+      name: 'livre:create',
+      description: 'Create livres',
+      category: PermissionCategory.LIVRE_MANAGEMENT,
+    },
+    {
+      name: 'livre:read',
+      description: 'View livres',
+      category: PermissionCategory.LIVRE_MANAGEMENT,
+    },
+    {
+      name: 'livre:update',
+      description: 'Update livres',
+      category: PermissionCategory.LIVRE_MANAGEMENT,
+    },
+    {
+      name: 'livre:delete',
+      description: 'Delete livres',
+      category: PermissionCategory.LIVRE_MANAGEMENT,
+    },
+    {
+      name: 'livre:submit',
+      description: 'Submit livres',
+      category: PermissionCategory.LIVRE_MANAGEMENT,
+    },
+    {
+      name: 'livre:approve',
+      description: 'Approve livres',
+      category: PermissionCategory.LIVRE_MANAGEMENT,
+    },
+
+    // Document Management Permissions
+    {
+      name: 'document:upload',
+      description: 'Upload documents',
+      category: PermissionCategory.DOCUMENT_MANAGEMENT,
+    },
+    {
+      name: 'document:download',
+      description: 'Download documents',
+      category: PermissionCategory.DOCUMENT_MANAGEMENT,
+    },
+    {
+      name: 'document:delete',
+      description: 'Delete documents',
+      category: PermissionCategory.DOCUMENT_MANAGEMENT,
+    },
+
+    // Task Management Permissions
+    {
+      name: 'task:create',
+      description: 'Create tasks',
+      category: PermissionCategory.TASK_MANAGEMENT,
+    },
+    {
+      name: 'task:read',
+      description: 'View tasks',
+      category: PermissionCategory.TASK_MANAGEMENT,
+    },
+    {
+      name: 'task:update',
+      description: 'Update tasks',
+      category: PermissionCategory.TASK_MANAGEMENT,
+    },
+    {
+      name: 'task:delete',
+      description: 'Delete tasks',
+      category: PermissionCategory.TASK_MANAGEMENT,
+    },
+    {
+      name: 'task:assign',
+      description: 'Assign tasks to users',
+      category: PermissionCategory.TASK_MANAGEMENT,
+    },
+
+    // Reporting Permissions
+    {
+      name: 'report:generate',
+      description: 'Generate reports',
+      category: PermissionCategory.REPORTING,
+    },
+    {
+      name: 'report:export',
+      description: 'Export data',
+      category: PermissionCategory.REPORTING,
+    },
+    {
+      name: 'dashboard:view',
+      description: 'View dashboards',
+      category: PermissionCategory.REPORTING,
+    },
+
+    // System Configuration Permissions
+    {
+      name: 'system:manage-settings',
+      description: 'Manage system settings',
+      category: PermissionCategory.SYSTEM_CONFIGURATION,
+    },
+    {
+      name: 'system:manage-tenants',
+      description: 'Manage tenants',
+      category: PermissionCategory.SYSTEM_CONFIGURATION,
+    },
+    {
+      name: 'system:manage-roles',
+      description: 'Manage roles',
+      category: PermissionCategory.SYSTEM_CONFIGURATION,
+    },
+    {
+      name: 'tenant:manage-settings',
+      description: 'Manage tenant settings',
+      category: PermissionCategory.SYSTEM_CONFIGURATION,
+    },
+  ];
+
+  // Create all permissions
+  for (const permissionData of permissions) {
+    const permission = await prisma.permission.upsert({
+      where: { name: permissionData.name },
+      update: {},
+      create: permissionData,
+    });
+    console.log(`Created/Updated permission: ${permission.name}`);
+  }
+
+  // Assign permissions to roles
+  // For SUPER_ADMIN, assign all permissions
+  const allPermissions = await prisma.permission.findMany();
+  for (const permission of allPermissions) {
+    await prisma.rolePermission.upsert({
+      where: {
+        roleId_permissionId: {
+          roleId: superAdminRole.id,
+          permissionId: permission.id,
+        },
+      },
+      update: {},
+      create: {
+        roleId: superAdminRole.id,
+        permissionId: permission.id,
+      },
+    });
+  }
+  console.log('Assigned all permissions to SUPER_ADMIN role');
+
+  // For ADMIN, assign all permissions except system configuration
+  const adminPermissions = await prisma.permission.findMany({
+    where: {
+      category: {
+        not: PermissionCategory.SYSTEM_CONFIGURATION,
+      },
+    },
+  });
+  
+  // Add tenant:manage-settings to admin permissions
+  const tenantSettingsPermission = await prisma.permission.findUnique({
+    where: { name: 'tenant:manage-settings' },
+  });
+  
+  if (tenantSettingsPermission) {
+    adminPermissions.push(tenantSettingsPermission);
+  }
+  
+  for (const permission of adminPermissions) {
+    await prisma.rolePermission.upsert({
+      where: {
+        roleId_permissionId: {
+          roleId: adminRole.id,
+          permissionId: permission.id,
+        },
+      },
+      update: {},
+      create: {
+        roleId: adminRole.id,
+        permissionId: permission.id,
+      },
+    });
+  }
+  console.log('Assigned appropriate permissions to ADMIN role');
+
+  // For TEAM_MANAGER, assign client, declaration, livre, document, task, and reporting permissions
+  const teamManagerPermissionCategories = [
+    PermissionCategory.CLIENT_MANAGEMENT,
+    PermissionCategory.DECLARATION_MANAGEMENT,
+    PermissionCategory.LIVRE_MANAGEMENT,
+    PermissionCategory.DOCUMENT_MANAGEMENT,
+    PermissionCategory.TASK_MANAGEMENT,
+    PermissionCategory.REPORTING,
+  ];
+  
+  const teamManagerPermissions = await prisma.permission.findMany({
+    where: {
+      category: {
+        in: teamManagerPermissionCategories,
+      },
+    },
+  });
+  
+  // Add specific user management permissions
+  const userReadPermission = await prisma.permission.findUnique({
+    where: { name: 'user:read' },
+  });
+  
+  if (userReadPermission) {
+    teamManagerPermissions.push(userReadPermission);
+  }
+  
+  for (const permission of teamManagerPermissions) {
+    await prisma.rolePermission.upsert({
+      where: {
+        roleId_permissionId: {
+          roleId: teamManagerRole.id,
+          permissionId: permission.id,
+        },
+      },
+      update: {},
+      create: {
+        roleId: teamManagerRole.id,
+        permissionId: permission.id,
+      },
+    });
+  }
+  console.log('Assigned appropriate permissions to TEAM_MANAGER role');
+
+  // For EMPLOYEE, assign basic permissions
+  const employeePermissionNames = [
+    'client:read',
+    'declaration:create',
+    'declaration:read',
+    'declaration:update',
+    'declaration:submit',
+    'livre:create',
+    'livre:read',
+    'livre:update',
+    'livre:submit',
+    'document:upload',
+    'document:download',
+    'task:create',
+    'task:read',
+    'task:update',
+    'dashboard:view',
+  ];
+  
+  const employeePermissions = await prisma.permission.findMany({
+    where: {
+      name: {
+        in: employeePermissionNames,
+      },
+    },
+  });
+  
+  for (const permission of employeePermissions) {
+    await prisma.rolePermission.upsert({
+      where: {
+        roleId_permissionId: {
+          roleId: employeeRole.id,
+          permissionId: permission.id,
+        },
+      },
+      update: {},
+      create: {
+        roleId: employeeRole.id,
+        permissionId: permission.id,
+      },
+    });
+  }
+  console.log('Assigned appropriate permissions to EMPLOYEE role');
+
+  // Create tenants
+  const defaultTenant = await prisma.tenant.upsert({
+    where: { id: 'default-tenant-id' },
+    update: {
+      name: 'Default Tenant',
+      description: 'Default tenant for testing',
+    },
+    create: {
+      id: 'default-tenant-id',
+      name: 'Default Tenant',
+      description: 'Default tenant for testing',
+    },
+  });
+
+  console.log('Created/Updated default tenant:', defaultTenant);
+
+  const secondTenant = await prisma.tenant.upsert({
+    where: { id: 'second-tenant-id' },
+    update: {
+      name: 'Second Tenant',
+      description: 'Second tenant for testing multi-tenant functionality',
+    },
+    create: {
+      id: 'second-tenant-id',
+      name: 'Second Tenant',
+      description: 'Second tenant for testing multi-tenant functionality',
+    },
+  });
+
+  console.log('Created/Updated second tenant:', secondTenant);
+
+  // Hash the passwords
+  const hashedPassword = await bcrypt.hash('SracomConnect@2025Sr', 10);
+
+  // Create a super admin user (without tenant)
+  const superAdminUser = await prisma.user.upsert({
+    where: { email: 'sracomconnect@gmail.com' },
+    update: {
+      username: 'superadmin',
+      password: hashedPassword,
+      roleId: superAdminRole.id,
+    },
+    create: {
+      username: 'superadmin',
+      email: 'sracomconnect@gmail.com',
+      password: hashedPassword,
+      roleId: superAdminRole.id,
+      // No tenantId for super admin as they have access across all tenants
+    },
+  });
+
+  console.log('Created/Updated super admin user:', superAdminUser);
+
+  // Create an admin user for the default tenant
+  const adminUser = await prisma.user.upsert({
+    where: { email: 'admin@example.com' },
+    update: {
+      username: 'admin',
+      password: hashedPassword,
+      roleId: adminRole.id,
+      tenantId: defaultTenant.id,
+    },
+    create: {
+      username: 'admin',
+      email: 'admin@example.com',
+      password: hashedPassword,
+      roleId: adminRole.id,
+      tenantId: defaultTenant.id,
+    },
+  });
+
+  console.log('Created/Updated admin user:', adminUser);
+
+  // Create a team manager for the default tenant
+  const teamManagerUser = await prisma.user.upsert({
+    where: { email: 'manager@example.com' },
+    update: {
+      username: 'manager',
+      password: hashedPassword,
+      roleId: teamManagerRole.id,
+      tenantId: defaultTenant.id,
+    },
+    create: {
+      username: 'manager',
+      email: 'manager@example.com',
+      password: hashedPassword,
+      roleId: teamManagerRole.id,
+      tenantId: defaultTenant.id,
+    },
+  });
+
+  console.log('Created/Updated team manager user:', teamManagerUser);
+
+  // Create an employee user for the default tenant
+  const employeeUser = await prisma.user.upsert({
+    where: { email: 'employee@example.com' },
+    update: {
+      username: 'employee',
+      password: hashedPassword,
+      roleId: employeeRole.id,
+      tenantId: defaultTenant.id,
+    },
+    create: {
+      username: 'employee',
+      email: 'employee@example.com',
+      password: hashedPassword,
+      roleId: employeeRole.id,
+      tenantId: defaultTenant.id,
+    },
+  });
+
+  console.log('Created/Updated employee user:', employeeUser);
+
+  // Create an admin user for the second tenant
+  const secondTenantAdmin = await prisma.user.upsert({
+    where: { email: 'admin2@example.com' },
+    update: {
+      username: 'admin2',
+      password: hashedPassword,
+      roleId: adminRole.id,
+      tenantId: secondTenant.id,
+    },
+    create: {
+      username: 'admin2',
+      email: 'admin2@example.com',
+      password: hashedPassword,
+      roleId: adminRole.id,
+      tenantId: secondTenant.id,
+    },
+  });
+
+  console.log('Created/Updated second tenant admin user:', secondTenantAdmin);
+
+  // Create a custom role for the default tenant
+  const readOnlyAuditorRole = await prisma.customRole.upsert({
+    where: {
+      tenantId_name: {
+        tenantId: defaultTenant.id,
+        name: 'READ_ONLY_AUDITOR',
+      },
+    },
+    update: {
+      description: 'Read-only access for auditing purposes',
+    },
+    create: {
+      tenantId: defaultTenant.id,
+      name: 'READ_ONLY_AUDITOR',
+      description: 'Read-only access for auditing purposes',
+    },
+  });
+
+  console.log('Created/Updated custom role:', readOnlyAuditorRole);
+
+  // Assign read permissions to the custom role
+  const readPermissions = await prisma.permission.findMany({
+    where: {
+      name: {
+        contains: 'read',
+      },
+    },
+  });
+
+  for (const permission of readPermissions) {
+    await prisma.customRolePermission.upsert({
+      where: {
+        customRoleId_permissionId: {
+          customRoleId: readOnlyAuditorRole.id,
+          permissionId: permission.id,
+        },
+      },
+      update: {},
+      create: {
+        customRoleId: readOnlyAuditorRole.id,
+        permissionId: permission.id,
+      },
+    });
+  }
+
+  console.log('Assigned read permissions to READ_ONLY_AUDITOR custom role');
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(() => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    prisma.$disconnect();
+  });

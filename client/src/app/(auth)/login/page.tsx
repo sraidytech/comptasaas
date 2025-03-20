@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { login } from "./actions";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,26 +22,18 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Échec de connexion');
+      // Use our server action to login
+      const userData = await login({ email, password });
+      
+      // Store user data in localStorage for client-side access
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      // Redirect based on role
+      if (userData.role === 'SUPER_ADMIN') {
+        router.push('/admin');
+      } else {
+        router.push('/dashboard');
       }
-
-      const data = await response.json();
-      
-      // Store the token in localStorage
-      localStorage.setItem('token', data.access_token);
-      
-      // Redirect to dashboard
-      router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue lors de la connexion');
     } finally {

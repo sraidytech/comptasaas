@@ -1,13 +1,25 @@
 import { Injectable, NestMiddleware, ForbiddenException } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { JwtService } from '@nestjs/jwt';
-import { JwtPayload } from '../../auth/auth.service';
+
+interface JwtPayload {
+  sub: string;
+  email: string;
+  role: string;
+  tenantId?: string;
+}
+
+interface RequestWithTenant extends Request {
+  tenantId?: string;
+  userId?: string;
+  userRole?: string;
+}
 
 @Injectable()
 export class TenantIsolationMiddleware implements NestMiddleware {
   constructor(private jwtService: JwtService) {}
 
-  use(req: Request, res: Response, next: NextFunction) {
+  use(req: RequestWithTenant, res: Response, next: NextFunction): void {
     // Skip tenant isolation for auth routes
     if (req.path.startsWith('/auth')) {
       return next();
@@ -39,7 +51,8 @@ export class TenantIsolationMiddleware implements NestMiddleware {
       }
 
       // Check if the requested tenant matches the user's tenant
-      const requestedTenantId = req.params.tenantId || req.query.tenantId;
+      const requestedTenantId =
+        req.params.tenantId || (req.query.tenantId as string);
       if (requestedTenantId && requestedTenantId !== decoded.tenantId) {
         // Only allow super admins to access other tenants
         if (decoded.role !== 'SUPER_ADMIN') {
@@ -48,12 +61,12 @@ export class TenantIsolationMiddleware implements NestMiddleware {
       }
 
       // Add the tenant ID to the request for use in controllers
-      req['tenantId'] = decoded.tenantId;
-      req['userId'] = decoded.sub;
-      req['userRole'] = decoded.role;
+      req.tenantId = decoded.tenantId;
+      req.userId = decoded.sub;
+      req.userRole = decoded.role;
 
       next();
-    } catch (error) {
+    } catch {
       // If token verification fails, just proceed (auth guard will handle it)
       next();
     }

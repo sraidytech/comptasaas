@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { PasswordService } from '../common/password.service';
@@ -30,6 +34,17 @@ export interface LoginResponse extends TokenResponse {
 export interface RefreshTokenPayload {
   sub: string;
   refreshToken: string;
+}
+
+interface UserWithRole {
+  id: string;
+  email: string;
+  username: string;
+  tenantId?: string | null;
+  role?: {
+    id: string;
+    name: string;
+  };
 }
 
 @Injectable()
@@ -90,10 +105,12 @@ export class AuthService {
           description: 'Regular employee with limited access',
         },
       });
-      
+
       // Hash password
-      const hashedPassword = await this.passwordService.hash(registerDto.password);
-      
+      const hashedPassword = await this.passwordService.hash(
+        registerDto.password,
+      );
+
       // Create user with new role
       const user = await this.prisma.user.create({
         data: {
@@ -105,13 +122,15 @@ export class AuthService {
         },
         include: { role: true },
       });
-      
+
       return this.generateLoginResponse(user);
     }
-    
+
     // Hash password
-    const hashedPassword = await this.passwordService.hash(registerDto.password);
-    
+    const hashedPassword = await this.passwordService.hash(
+      registerDto.password,
+    );
+
     // Create user with default role
     const user = await this.prisma.user.create({
       data: {
@@ -123,15 +142,15 @@ export class AuthService {
       },
       include: { role: true },
     });
-    
+
     return this.generateLoginResponse(user);
   }
 
   login(user: Omit<User, 'password'>): LoginResponse {
-    return this.generateLoginResponse(user);
+    return this.generateLoginResponse(user as UserWithRole);
   }
-  
-  private generateLoginResponse(user: any): LoginResponse {
+
+  private generateLoginResponse(user: UserWithRole): LoginResponse {
     const roleName = user.role?.name || 'user';
     const payload: JwtPayload = {
       email: user.email,
@@ -146,7 +165,9 @@ export class AuthService {
     };
 
     const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
-    const refreshToken = this.jwtService.sign(refreshPayload, { expiresIn: '7d' });
+    const refreshToken = this.jwtService.sign(refreshPayload, {
+      expiresIn: '7d',
+    });
 
     return {
       access_token: accessToken,
@@ -160,24 +181,26 @@ export class AuthService {
       },
     };
   }
-  
+
   private generateRefreshToken(): string {
-    return Math.random().toString(36).substring(2, 15) + 
-           Math.random().toString(36).substring(2, 15);
+    return (
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15)
+    );
   }
-  
+
   async refreshToken(refreshToken: string): Promise<TokenResponse> {
     try {
-      const decoded = this.jwtService.verify(refreshToken);
+      const decoded = this.jwtService.verify<RefreshTokenPayload>(refreshToken);
       const user = await this.prisma.user.findUnique({
         where: { id: decoded.sub },
         include: { role: true },
       });
-      
+
       if (!user) {
         throw new UnauthorizedException('Invalid refresh token');
       }
-      
+
       const roleName = user.role?.name || 'user';
       const payload: JwtPayload = {
         email: user.email,
@@ -185,20 +208,22 @@ export class AuthService {
         role: roleName,
         tenantId: user.tenantId,
       };
-      
+
       const refreshPayload: RefreshTokenPayload = {
         sub: user.id,
         refreshToken: this.generateRefreshToken(),
       };
-      
+
       const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
-      const newRefreshToken = this.jwtService.sign(refreshPayload, { expiresIn: '7d' });
-      
+      const newRefreshToken = this.jwtService.sign(refreshPayload, {
+        expiresIn: '7d',
+      });
+
       return {
         access_token: accessToken,
         refresh_token: newRefreshToken,
       };
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
   }

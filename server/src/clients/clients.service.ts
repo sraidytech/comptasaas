@@ -2,6 +2,16 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateClientDto, UpdateClientDto } from './dto';
 import { Client } from './entities';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+
+interface AssignedUser {
+  user: {
+    id: string;
+    email: string;
+    username: string;
+  };
+  permissions: string[];
+}
 
 @Injectable()
 export class ClientsService {
@@ -42,7 +52,10 @@ export class ClientsService {
       });
       return client;
     } catch (error) {
-      if (error.code === 'P2025') {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
         throw new NotFoundException(`Client with ID ${id} not found`);
       }
       throw error;
@@ -56,7 +69,10 @@ export class ClientsService {
       });
       return client;
     } catch (error) {
-      if (error.code === 'P2025') {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
         throw new NotFoundException(`Client with ID ${id} not found`);
       }
       throw error;
@@ -109,10 +125,7 @@ export class ClientsService {
         clientId,
         userId,
         clientPermissions: {
-          create: [
-            { permission: 'READ' },
-            { permission: 'WRITE' },
-          ],
+          create: [{ permission: 'READ' }, { permission: 'WRITE' }],
         },
       },
     });
@@ -146,7 +159,7 @@ export class ClientsService {
     });
   }
 
-  async getAssignedUsers(clientId: string): Promise<any[]> {
+  async getAssignedUsers(clientId: string): Promise<AssignedUser[]> {
     const client = await this.prisma.client.findUnique({
       where: { id: clientId },
       include: {
