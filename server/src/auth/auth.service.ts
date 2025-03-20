@@ -1,8 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { PasswordService } from '../common/password.service';
 import { User } from '../users/entities';
+import { RegisterDto } from './dto/register.dto';
 
 export interface JwtPayload {
   email: string;
@@ -11,8 +12,12 @@ export interface JwtPayload {
   tenantId?: string | null;
 }
 
-export interface LoginResponse {
+export interface TokenResponse {
   access_token: string;
+  refresh_token: string;
+}
+
+export interface LoginResponse extends TokenResponse {
   user: {
     id: string;
     email: string;
@@ -20,6 +25,11 @@ export interface LoginResponse {
     role: string;
     tenantId?: string | null;
   };
+}
+
+export interface RefreshTokenPayload {
+  sub: string;
+  refreshToken: string;
 }
 
 @Injectable()
@@ -57,7 +67,71 @@ export class AuthService {
     return result;
   }
 
+  async register(registerDto: RegisterDto): Promise<LoginResponse> {
+    // Check if user with email already exists
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: registerDto.email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('User with this email already exists');
+    }
+
+    // Get default role (EMPLOYEE)
+    const defaultRole = await this.prisma.role.findFirst({
+      where: { name: 'EMPLOYEE' },
+    });
+
+    if (!defaultRole) {
+      // Create EMPLOYEE role if it doesn't exist
+      const newRole = await this.prisma.role.create({
+        data: {
+          name: 'EMPLOYEE',
+          description: 'Regular employee with limited access',
+        },
+      });
+      
+      // Hash password
+      const hashedPassword = await this.passwordService.hash(registerDto.password);
+      
+      // Create user with new role
+      const user = await this.prisma.user.create({
+        data: {
+          email: registerDto.email,
+          username: registerDto.username,
+          password: hashedPassword,
+          roleId: newRole.id,
+          tenantId: registerDto.tenantId,
+        },
+        include: { role: true },
+      });
+      
+      return this.generateLoginResponse(user);
+    }
+    
+    // Hash password
+    const hashedPassword = await this.passwordService.hash(registerDto.password);
+    
+    // Create user with default role
+    const user = await this.prisma.user.create({
+      data: {
+        email: registerDto.email,
+        username: registerDto.username,
+        password: hashedPassword,
+        roleId: defaultRole.id,
+        tenantId: registerDto.tenantId,
+      },
+      include: { role: true },
+    });
+    
+    return this.generateLoginResponse(user);
+  }
+
   login(user: Omit<User, 'password'>): LoginResponse {
+    return this.generateLoginResponse(user);
+  }
+  
+  private generateLoginResponse(user: any): LoginResponse {
     const roleName = user.role?.name || 'user';
     const payload: JwtPayload = {
       email: user.email,
@@ -66,10 +140,17 @@ export class AuthService {
       tenantId: user.tenantId,
     };
 
-    const token = this.jwtService.sign(payload);
+    const refreshPayload: RefreshTokenPayload = {
+      sub: user.id,
+      refreshToken: this.generateRefreshToken(),
+    };
+
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+    const refreshToken = this.jwtService.sign(refreshPayload, { expiresIn: '7d' });
 
     return {
-      access_token: token,
+      access_token: accessToken,
+      refresh_token: refreshToken,
       user: {
         id: user.id,
         email: user.email,
@@ -78,5 +159,47 @@ export class AuthService {
         tenantId: user.tenantId,
       },
     };
+  }
+  
+  private generateRefreshToken(): string {
+    return Math.random().toString(36).substring(2, 15) + 
+           Math.random().toString(36).substring(2, 15);
+  }
+  
+  async refreshToken(refreshToken: string): Promise<TokenResponse> {
+    try {
+      const decoded = this.jwtService.verify(refreshToken);
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+        include: { role: true },
+      });
+      
+      if (!user) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+      
+      const roleName = user.role?.name || 'user';
+      const payload: JwtPayload = {
+        email: user.email,
+        sub: user.id,
+        role: roleName,
+        tenantId: user.tenantId,
+      };
+      
+      const refreshPayload: RefreshTokenPayload = {
+        sub: user.id,
+        refreshToken: this.generateRefreshToken(),
+      };
+      
+      const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+      const newRefreshToken = this.jwtService.sign(refreshPayload, { expiresIn: '7d' });
+      
+      return {
+        access_token: accessToken,
+        refresh_token: newRefreshToken,
+      };
+    } catch (error) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
   }
 }

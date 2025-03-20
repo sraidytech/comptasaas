@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -8,6 +8,8 @@ import { UsersModule } from './users/users.module';
 import { UsersControllerModule } from './users/users-controller.module';
 import { CommonModule } from './common/common.module';
 import { SharedAuthModule } from './auth/shared';
+import { TenantIsolationMiddleware } from './common';
+import { ClientsModule } from './clients/clients.module';
 
 @Module({
   imports: [
@@ -20,8 +22,13 @@ import { SharedAuthModule } from './auth/shared';
     AuthModule,
     UsersModule,
     UsersControllerModule,
+    ClientsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(TenantIsolationMiddleware).forRoutes('*');
+  }
+}

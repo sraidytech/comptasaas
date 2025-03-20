@@ -5,11 +5,13 @@ import {
   Request,
   HttpCode,
   HttpStatus,
+  Body,
 } from '@nestjs/common';
-import { AuthService, LoginResponse } from './auth.service';
+import { AuthService, LoginResponse, TokenResponse } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { User } from '../users/entities';
+import { RegisterDto, RefreshTokenDto } from './dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -27,5 +29,33 @@ export class AuthController {
   @Post('login')
   login(@Request() req: { user: Omit<User, 'password'> }): LoginResponse {
     return this.authService.login(req.user);
+  }
+
+  @ApiOperation({ summary: 'User registration' })
+  @ApiResponse({
+    status: 201,
+    description: 'User successfully registered',
+  })
+  @ApiResponse({ status: 409, description: 'User with this email already exists' })
+  @ApiBody({ type: RegisterDto })
+  @HttpCode(HttpStatus.CREATED)
+  @Post('register')
+  async register(@Body() registerDto: RegisterDto): Promise<LoginResponse> {
+    return this.authService.register(registerDto);
+  }
+
+  @ApiOperation({ summary: 'Refresh access token' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns new access and refresh tokens',
+  })
+  @ApiResponse({ status: 401, description: 'Invalid refresh token' })
+  @ApiBody({ type: RefreshTokenDto })
+  @HttpCode(HttpStatus.OK)
+  @Post('refresh')
+  async refreshToken(
+    @Body() refreshTokenDto: RefreshTokenDto,
+  ): Promise<TokenResponse> {
+    return this.authService.refreshToken(refreshTokenDto.refresh_token);
   }
 }
