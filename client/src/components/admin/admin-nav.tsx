@@ -11,6 +11,7 @@ import {
   Shield,
   Settings,
   Home,
+  User,
 } from 'lucide-react';
 
 interface AdminNavProps extends React.HTMLAttributes<HTMLElement> {
@@ -52,6 +53,11 @@ export function AdminNav({ className, isCollapsed, ...props }: AdminNavProps) {
       icon: Shield,
     },
     {
+      title: 'Profil',
+      href: '/admin/profile',
+      icon: User,
+    },
+    {
       title: 'Paramètres',
       href: '/admin/settings',
       icon: Settings,
@@ -59,7 +65,7 @@ export function AdminNav({ className, isCollapsed, ...props }: AdminNavProps) {
   ];
 
   return (
-    <nav className={cn('flex flex-col gap-2 p-2', className)} {...props}>
+    <nav className={cn('flex flex-col gap-2 p-4 mt-2', className)} {...props}>
       {navItems.map((item) => {
         const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
         return (
@@ -67,10 +73,10 @@ export function AdminNav({ className, isCollapsed, ...props }: AdminNavProps) {
             key={item.href}
             href={item.href}
             className={cn(
-              'flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors',
+              'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-all duration-200',
               isActive
-                ? 'bg-primary text-primary-foreground'
-                : 'hover:bg-muted text-muted-foreground hover:text-foreground',
+                ? 'bg-blue-50 text-blue-600'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
               isCollapsed && 'justify-center'
             )}
           >

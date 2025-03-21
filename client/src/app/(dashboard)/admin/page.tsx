@@ -1,12 +1,8 @@
-import { Metadata } from 'next';
+'use client';
+
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-
-export const metadata: Metadata = {
-  title: 'Tableau de Bord Super Admin',
-  description: 'Tableau de bord pour les super administrateurs',
-};
 
 export default function AdminDashboardPage() {
   return (
