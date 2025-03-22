@@ -48,8 +48,13 @@ export function AdminNav({ className, isCollapsed, ...props }: AdminNavProps) {
       icon: BookOpen,
     },
     {
-      title: 'Rôles & Permissions',
+      title: 'Rôles',
       href: '/admin/roles',
+      icon: Shield,
+    },
+    {
+      title: 'Permissions',
+      href: '/admin/permissions',
       icon: Shield,
     },
     {

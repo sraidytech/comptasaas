@@ -29,7 +29,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"superadmin@example.com\",\n    \"password\": \"password123\"\n}",
+							"raw": "{\n    \"email\": \"sracomconnect@gmail.com\",\n    \"password\": \"SracomConnect@2025Sr\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -37,11 +37,12 @@
 							}
 						},
 						"url": {
-							"raw": "{{baseUrl}}/auth/login",
+							"raw": "{{baseUrl}}/api/auth/login",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"api",
 								"auth",
 								"login"
 							]
@@ -78,11 +79,12 @@
 							}
 						},
 						"url": {
-							"raw": "{{baseUrl}}/auth/login",
+							"raw": "{{baseUrl}}/api/auth/login",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"api",
 								"auth",
 								"login"
 							]
@@ -119,11 +121,12 @@
 							}
 						},
 						"url": {
-							"raw": "{{baseUrl}}/auth/login",
+							"raw": "{{baseUrl}}/api/auth/login",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"api",
 								"auth",
 								"login"
 							]
@@ -160,11 +163,12 @@
 							}
 						},
 						"url": {
-							"raw": "{{baseUrl}}/auth/register",
+							"raw": "{{baseUrl}}/api/auth/register",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"api",
 								"auth",
 								"register"
 							]
@@ -201,11 +205,12 @@
 							}
 						},
 						"url": {
-							"raw": "{{baseUrl}}/auth/refresh",
+							"raw": "{{baseUrl}}/api/auth/refresh",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"api",
 								"auth",
 								"refresh"
 							]
@@ -236,11 +241,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/clients",
+							"raw": "{{baseUrl}}/api/clients",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"api",
 								"clients"
 							]
 						},
@@ -264,11 +270,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/clients?tenantId={{defaultTenantId}}",
+							"raw": "{{baseUrl}}/api/clients?tenantId={{defaultTenantId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"api",
 								"clients"
 							],
 							"query": [
@@ -319,11 +326,12 @@
 							}
 						},
 						"url": {
-							"raw": "{{baseUrl}}/clients",
+							"raw": "{{baseUrl}}/api/clients",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"api",
 								"clients"
 							]
 						},
@@ -347,11 +355,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/clients/{{clientId}}",
+							"raw": "{{baseUrl}}/api/clients/{{clientId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"api",
 								"clients",
 								"{{clientId}}"
 							]
@@ -385,11 +394,12 @@
 							}
 						},
 						"url": {
-							"raw": "{{baseUrl}}/clients/{{clientId}}",
+							"raw": "{{baseUrl}}/api/clients/{{clientId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"api",
 								"clients",
 								"{{clientId}}"
 							]
@@ -414,11 +424,12 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/clients/{{clientId}}/assign/{{userId}}",
+							"raw": "{{baseUrl}}/api/clients/{{clientId}}/assign/{{userId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"api",
 								"clients",
 								"{{clientId}}",
 								"assign",
@@ -445,11 +456,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/clients/{{clientId}}/users",
+							"raw": "{{baseUrl}}/api/clients/{{clientId}}/users",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"api",
 								"clients",
 								"{{clientId}}",
 								"users"
@@ -475,11 +487,12 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/clients/{{clientId}}/assign/{{userId}}",
+							"raw": "{{baseUrl}}/api/clients/{{clientId}}/assign/{{userId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"api",
 								"clients",
 								"{{clientId}}",
 								"assign",
@@ -506,11 +519,12 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/clients/{{clientId}}",
+							"raw": "{{baseUrl}}/api/clients/{{clientId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"api",
 								"clients",
 								"{{clientId}}"
 							]
@@ -541,11 +555,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/users",
+							"raw": "{{baseUrl}}/api/users",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"api",
 								"users"
 							]
 						},
@@ -569,11 +584,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/users?tenantId={{defaultTenantId}}",
+							"raw": "{{baseUrl}}/api/users?tenantId={{defaultTenantId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"api",
 								"users"
 							],
 							"query": [
@@ -603,11 +619,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/users/{{userId}}",
+							"raw": "{{baseUrl}}/api/users/{{userId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"api",
 								"users",
 								"{{userId}}"
 							]
@@ -653,11 +670,12 @@
 							}
 						},
 						"url": {
-							"raw": "{{baseUrl}}/users",
+							"raw": "{{baseUrl}}/api/users",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"api",
 								"users"
 							]
 						},
@@ -690,11 +708,12 @@
 							}
 						},
 						"url": {
-							"raw": "{{baseUrl}}/users/{{userId}}",
+							"raw": "{{baseUrl}}/api/users/{{userId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"api",
 								"users",
 								"{{userId}}"
 							]
@@ -719,11 +738,12 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/users/{{userId}}",
+							"raw": "{{baseUrl}}/api/users/{{userId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"api",
 								"users",
 								"{{userId}}"
 							]
@@ -734,6 +754,277 @@
 				}
 			],
 			"description": "User management endpoints"
+		},
+		{
+			"name": "Declaration Types",
+			"item": [
+				{
+					"name": "Get All Declaration Types",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/declaration-types",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"declaration-types"
+							]
+						},
+						"description": "Get all declaration types"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Declaration Type",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.environment.set(\"declarationTypeId\", jsonData.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Test Declaration Type\",\n    \"description\": \"Test description\",\n    \"articles\": \"Art. 123\",\n    \"months\": [1, 4, 7, 10]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/declaration-types",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"declaration-types"
+							]
+						},
+						"description": "Create a new declaration type with months in the same request"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Declaration Type by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/declaration-types/{{declarationTypeId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"declaration-types",
+								"{{declarationTypeId}}"
+							]
+						},
+						"description": "Get declaration type by ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Add Months to Declaration Type",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"months\": [1, 4, 7, 10]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/declaration-types/{{declarationTypeId}}/months",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"declaration-types",
+								"{{declarationTypeId}}",
+								"months"
+							]
+						},
+						"description": "Add months to declaration type"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Declaration Type",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Declaration Type\",\n    \"description\": \"Updated description\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/declaration-types/{{declarationTypeId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"declaration-types",
+								"{{declarationTypeId}}"
+							]
+						},
+						"description": "Update declaration type"
+					},
+					"response": []
+				},
+				{
+					"name": "Remove Months from Declaration Type",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"months\": [1, 4]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/declaration-types/{{declarationTypeId}}/months",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"declaration-types",
+								"{{declarationTypeId}}",
+								"months"
+							]
+						},
+						"description": "Remove months from declaration type"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Declaration Type",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/declaration-types/{{declarationTypeId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"declaration-types",
+								"{{declarationTypeId}}"
+							]
+						},
+						"description": "Delete declaration type"
+					},
+					"response": []
+				}
+			],
+			"description": "Declaration Type management endpoints"
 		}
 	],
 	"event": [
@@ -759,7 +1050,7 @@
 	"variable": [
 		{
 			"key": "baseUrl",
-			"value": "http://localhost:3001",
+			"value": "http://localhost:3000",
 			"type": "string"
 		}
 	]

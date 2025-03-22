@@ -11,6 +11,49 @@ export default function AdminDashboardPage() {
         <h1 className="text-3xl font-bold">Tableau de Bord Super Admin</h1>
       </div>
 
+      {/* Statistics Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="bg-blue-50">
+          <CardContent className="p-6">
+            <div className="flex flex-col gap-2">
+              <span className="text-blue-500 text-sm font-medium">Locataires</span>
+              <span className="text-3xl font-bold">2</span>
+              <span className="text-gray-500 text-sm">Locataires actifs</span>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-green-50">
+          <CardContent className="p-6">
+            <div className="flex flex-col gap-2">
+              <span className="text-green-500 text-sm font-medium">Utilisateurs</span>
+              <span className="text-3xl font-bold">5</span>
+              <span className="text-gray-500 text-sm">Utilisateurs actifs</span>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-purple-50">
+          <CardContent className="p-6">
+            <div className="flex flex-col gap-2">
+              <span className="text-purple-500 text-sm font-medium">Déclarations</span>
+              <span className="text-3xl font-bold">3</span>
+              <span className="text-gray-500 text-sm">Types de déclaration</span>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-amber-50">
+          <CardContent className="p-6">
+            <div className="flex flex-col gap-2">
+              <span className="text-amber-500 text-sm font-medium">Livres</span>
+              <span className="text-3xl font-bold">4</span>
+              <span className="text-gray-500 text-sm">Types de livre</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Tenant Management Card */}
         <Card>

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { login } from "./actions";
+import { storeAuthData } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,21 +23,26 @@ export default function LoginPage() {
     setError("");
 
     try {
+      console.log('Attempting to login with:', email);
+      
       // Use our server action to login
-      const userData = await login({ email, password });
+      const { user, accessToken, refreshToken } = await login({ email, password });
       
-      // Store user data in localStorage for client-side access
-      localStorage.setItem('user', JSON.stringify(userData));
+      // Store user data and tokens using our auth helper
+      storeAuthData(user, accessToken, refreshToken);
       
-      // Redirect based on role
-      if (userData.role === 'SUPER_ADMIN') {
+      console.log('Login successful, redirecting based on role:', user.role);
+      
+      // Redirect based on role using Next.js router
+      // This avoids the page reload that window.location causes
+      if (user.role === 'SUPER_ADMIN') {
         router.push('/admin');
       } else {
         router.push('/dashboard');
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'Une erreur est survenue lors de la connexion');
-    } finally {
       setIsLoading(false);
     }
   };

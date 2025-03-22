@@ -6,7 +6,9 @@ import { TenantsService } from './tenants.service';
 import { PermissionsService } from './permissions.service';
 import { RolesService } from './roles.service';
 import { DeclarationTypesService } from './declaration-types.service';
+import { DeclarationTypesController } from './declaration-types.controller';
 import { LivreTypesService } from './livre-types.service';
+import { LivreTypesController } from './livre-types.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { SuperAdminGuard } from './guards/super-admin.guard';
 
@@ -19,7 +21,11 @@ import { SuperAdminGuard } from './guards/super-admin.guard';
       signOptions: { expiresIn: '1d' },
     }),
   ],
-  controllers: [AdminController],
+  controllers: [
+    AdminController,
+    DeclarationTypesController,
+    LivreTypesController,
+  ],
   providers: [
     AdminService,
     TenantsService,

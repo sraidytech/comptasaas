@@ -5,21 +5,22 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, type User } from '@/lib/auth';
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<{
-    id: string;
-    email: string;
-    username: string;
-    role: string;
-    tenantId?: string;
-  } | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const currentUser = getCurrentUser();
     if (currentUser) {
-      setUser(currentUser);
+      // Convert the User type to the state type
+      setUser({
+        id: currentUser.id,
+        email: currentUser.email,
+        username: currentUser.username,
+        role: currentUser.role,
+        tenantId: currentUser.tenantId
+      });
     }
   }, []);
 

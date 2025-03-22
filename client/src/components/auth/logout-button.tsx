@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { logout } from '@/app/(auth)/login/actions';
+import { clearAuthData } from '@/lib/auth';
 import { LogOut } from 'lucide-react';
 
 interface LogoutButtonProps {
@@ -15,8 +16,19 @@ export function LogoutButton({ variant = 'outline', size = 'sm', className }: Lo
   const router = useRouter();
 
   const handleLogout = async () => {
-    await logout();
-    router.push('/login');
+    try {
+      // Call the server-side logout function
+      await logout();
+      // Clear client-side auth data
+      clearAuthData();
+      // Redirect to login page
+      router.push('/login');
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Even if server-side logout fails, clear client-side data and redirect
+      clearAuthData();
+      router.push('/login');
+    }
   };
 
   return (
