@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,7 +14,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -21,102 +22,259 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { toast } from 'sonner';
+import { usersApi, rolesApi, tenantsApi, CreateUserDto, Role, Tenant } from '@/lib/api';
+import { useAsync, useApiError } from '@/lib/hooks';
 
-// This would normally come from an API call
-const tenants = [
+// Mock data for fallback
+const mockTenants: Tenant[] = [
   {
     id: '1',
     name: 'Default Tenant',
+    description: '',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: '2',
     name: 'Second Tenant',
+    description: '',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
 ];
 
-// This would normally come from an API call
-const roles = [
+// Mock data for fallback
+const mockRoles: Role[] = [
   {
     id: '1',
     name: 'SUPER_ADMIN',
     description: 'Accès complet au système',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: '2',
     name: 'ADMIN',
     description: 'Accès complet à un locataire',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: '3',
     name: 'TEAM_MANAGER',
-    description: 'Gestion d&apos;une équipe',
+    description: 'Gestion d\'une équipe',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: '4',
     name: 'EMPLOYEE',
     description: 'Accès limité aux clients assignés',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
 ];
 
 export default function NewUserPage() {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState('');
-  const [tenant, setTenant] = useState('');
-  const [isActive, setIsActive] = useState(true);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
+  const router = useRouter();
+  const { getFieldError, hasFieldError, clearError } = useApiError();
+  
+  // State for roles and tenants
+  const [roles, setRoles] = useState<Role[]>(mockRoles);
+  const [tenants, setTenants] = useState<Tenant[]>(mockTenants);
+  
+  // Form state
+  const [formData, setFormData] = useState<CreateUserDto & { confirmPassword: string }>({
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    roleId: '',
+    tenantId: '',
+    isActive: true,
+  });
+  
+  // UI state
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  
+  // Fetch roles from API
+  const { data: apiRoles, loading: loadingRoles } = useAsync<Role[]>(
+    async () => {
+      try {
+        return await rolesApi.getAll();
+      } catch (error) {
+        console.error('Error fetching roles:', error);
+        return mockRoles;
+      }
+    },
+    true // Fetch immediately
+  );
+  
+  // Fetch tenants from API
+  const { data: apiTenants, loading: loadingTenants } = useAsync<Tenant[]>(
+    async () => {
+      try {
+        return await tenantsApi.getAll();
+      } catch (error) {
+        console.error('Error fetching tenants:', error);
+        return mockTenants;
+      }
+    },
+    true // Fetch immediately
+  );
+  
+  // Create user
+  const { loading, execute: createUser } = useAsync<unknown>(
+    async (data: unknown) => {
+      try {
+        // Convert to the expected type
+        const formData = data as CreateUserDto & { confirmPassword: string };
+        
+        // Create a new object without the confirmPassword field
+        const userData: CreateUserDto = {
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+          roleId: formData.roleId,
+          tenantId: formData.tenantId,
+          isActive: formData.isActive,
+        };
+        
+        // If role is SUPER_ADMIN, set tenantId to undefined
+        if (userData.roleId) {
+          const selectedRole = roles.find(r => r.id === userData.roleId);
+          if (selectedRole && selectedRole.name === 'SUPER_ADMIN') {
+            userData.tenantId = undefined;
+          }
+        }
+        
+        return await usersApi.create(userData);
+      } catch (error) {
+        console.error('Error creating user:', error);
+        throw error;
+      }
+    }
+  );
+  
+  // Update roles and tenants when API data is loaded
+  useEffect(() => {
+    if (apiRoles && apiRoles.length > 0) {
+      setRoles(apiRoles);
+    }
+  }, [apiRoles]);
+  
+  useEffect(() => {
+    if (apiTenants && apiTenants.length > 0) {
+      setTenants(apiTenants);
+    }
+  }, [apiTenants]);
+  
+  // Handle form input changes
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({ ...prev, [id]: value }));
+    
+    // Clear validation error for this field
+    if (validationErrors[id]) {
+      setValidationErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[id];
+        return newErrors;
+      });
+    }
+    
+    // Clear API error
+    clearError();
+  };
+  
+  // Handle select changes
+  const handleSelectChange = (id: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [id]: value }));
+    
+    // Clear validation error for this field
+    if (validationErrors[id]) {
+      setValidationErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[id];
+        return newErrors;
+      });
+    }
+    
+    // Clear API error
+    clearError();
+    
+    // If role is changed to SUPER_ADMIN, clear tenant
+    if (id === 'roleId') {
+      const selectedRole = roles.find(r => r.id === value);
+      if (selectedRole && selectedRole.name === 'SUPER_ADMIN') {
+        setFormData((prev) => ({ ...prev, tenantId: '' }));
+      }
+    }
+  };
+  
+  // Handle checkbox changes
+  const handleCheckboxChange = (id: string, checked: boolean) => {
+    setFormData((prev) => ({ ...prev, [id]: checked }));
+  };
+  
+  // Validate form
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!username) newErrors.username = 'Le nom d&apos;utilisateur est requis';
-    if (!email) newErrors.email = 'L&apos;email est requis';
-    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Email invalide';
+    if (!formData.username?.trim()) newErrors.username = 'Le nom d\'utilisateur est requis';
+    if (!formData.email?.trim()) newErrors.email = 'L\'email est requis';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email invalide';
     
-    if (!password) newErrors.password = 'Le mot de passe est requis';
-    else if (password.length < 8) newErrors.password = 'Le mot de passe doit contenir au moins 8 caractères';
+    if (!formData.password?.trim()) newErrors.password = 'Le mot de passe est requis';
+    else if (formData.password.length < 8) newErrors.password = 'Le mot de passe doit contenir au moins 8 caractères';
     
-    if (password !== confirmPassword) newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
+    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
     
-    if (!role) newErrors.role = 'Le rôle est requis';
+    if (!formData.roleId) newErrors.roleId = 'Le rôle est requis';
     
     // Tenant is required for all roles except SUPER_ADMIN
-    if (role && role !== 'SUPER_ADMIN' && !tenant) {
-      newErrors.tenant = 'Le locataire est requis pour ce rôle';
+    const selectedRole = roles.find(r => r.id === formData.roleId);
+    if (selectedRole && selectedRole.name !== 'SUPER_ADMIN' && !formData.tenantId) {
+      newErrors.tenantId = 'Le locataire est requis pour ce rôle';
     }
     
-    setErrors(newErrors);
+    setValidationErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (validateForm()) {
-      // This would normally call an API to create the user
-      console.log('Creating user:', {
-        username,
-        email,
-        password,
-        role,
-        tenant: role === 'SUPER_ADMIN' ? null : tenant,
-        isActive,
-      });
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
+    
+    try {
+      // Submit form
+      const result = await createUser(formData);
       
-      // Redirect to users list
-      // router.push('/admin/users');
-      
-      // For now, just reset the form
-      setUsername('');
-      setEmail('');
-      setPassword('');
-      setConfirmPassword('');
-      setRole('');
-      setTenant('');
-      setIsActive(true);
-      setErrors({});
+      if (result) {
+        toast.success('Utilisateur créé avec succès');
+        
+        // Log the created user
+        console.log('User created:', result);
+        
+        // Navigate back to users list
+        router.push('/admin/users');
+      } else {
+        // If API returns null but doesn't throw an error
+        console.warn('API returned null result but did not throw an error');
+        toast.error('Erreur lors de la création de l\'utilisateur');
+      }
+    } catch (error) {
+      console.error('Error in form submission:', error);
+      toast.error('Erreur lors de la création de l\'utilisateur');
     }
   };
 
@@ -140,119 +298,172 @@ export default function NewUserPage() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent>
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="username">Nom d&apos;utilisateur</Label>
-                <Input
-                  id="username"
-                  placeholder="Nom d&apos;utilisateur"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                />
-                {errors.username && (
-                  <p className="text-sm text-red-500">{errors.username}</p>
-                )}
+            {(loadingRoles || loadingTenants) ? (
+              <div className="flex justify-center items-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">Chargement des données...</span>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="email@exemple.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-                {errors.email && (
-                  <p className="text-sm text-red-500">{errors.email}</p>
-                )}
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
+            ) : (
+              <div className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="password">Mot de passe</Label>
+                  <Label htmlFor="username" className={hasFieldError('username') || validationErrors.username ? 'text-red-500' : ''}>
+                    Nom d&apos;utilisateur
+                  </Label>
                   <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    id="username"
+                    placeholder="Nom d'utilisateur"
+                    value={formData.username || ''}
+                    onChange={handleChange}
+                    className={hasFieldError('username') || validationErrors.username ? 'border-red-500' : ''}
                   />
-                  {errors.password && (
-                    <p className="text-sm text-red-500">{errors.password}</p>
+                  {hasFieldError('username') && (
+                    <p className="text-sm text-red-500">{getFieldError('username')}</p>
+                  )}
+                  {validationErrors.username && (
+                    <p className="text-sm text-red-500">{validationErrors.username}</p>
                   )}
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                  <Label htmlFor="email" className={hasFieldError('email') || validationErrors.email ? 'text-red-500' : ''}>
+                    Email
+                  </Label>
                   <Input
-                    id="confirmPassword"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    id="email"
+                    type="email"
+                    placeholder="email@exemple.com"
+                    value={formData.email || ''}
+                    onChange={handleChange}
+                    className={hasFieldError('email') || validationErrors.email ? 'border-red-500' : ''}
                   />
-                  {errors.confirmPassword && (
-                    <p className="text-sm text-red-500">{errors.confirmPassword}</p>
+                  {hasFieldError('email') && (
+                    <p className="text-sm text-red-500">{getFieldError('email')}</p>
+                  )}
+                  {validationErrors.email && (
+                    <p className="text-sm text-red-500">{validationErrors.email}</p>
                   )}
                 </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="role">Rôle</Label>
-                <Select value={role} onValueChange={setRole}>
-                  <SelectTrigger id="role">
-                    <SelectValue placeholder="Sélectionner un rôle" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roles.map((r) => (
-                      <SelectItem key={r.id} value={r.name}>
-                        {r.name} - {r.description}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.role && (
-                  <p className="text-sm text-red-500">{errors.role}</p>
-                )}
-              </div>
-              
-              {role && role !== 'SUPER_ADMIN' && (
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className={hasFieldError('password') || validationErrors.password ? 'text-red-500' : ''}>
+                      Mot de passe
+                    </Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={formData.password || ''}
+                      onChange={handleChange}
+                      className={hasFieldError('password') || validationErrors.password ? 'border-red-500' : ''}
+                    />
+                    {hasFieldError('password') && (
+                      <p className="text-sm text-red-500">{getFieldError('password')}</p>
+                    )}
+                    {validationErrors.password && (
+                      <p className="text-sm text-red-500">{validationErrors.password}</p>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword" className={validationErrors.confirmPassword ? 'text-red-500' : ''}>
+                      Confirmer le mot de passe
+                    </Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={formData.confirmPassword || ''}
+                      onChange={handleChange}
+                      className={validationErrors.confirmPassword ? 'border-red-500' : ''}
+                    />
+                    {validationErrors.confirmPassword && (
+                      <p className="text-sm text-red-500">{validationErrors.confirmPassword}</p>
+                    )}
+                  </div>
+                </div>
+                
                 <div className="space-y-2">
-                  <Label htmlFor="tenant">Locataire</Label>
-                  <Select value={tenant} onValueChange={setTenant}>
-                    <SelectTrigger id="tenant">
-                      <SelectValue placeholder="Sélectionner un locataire" />
+                  <Label htmlFor="roleId" className={hasFieldError('roleId') || validationErrors.roleId ? 'text-red-500' : ''}>
+                    Rôle
+                  </Label>
+                  <Select 
+                    value={formData.roleId || ''} 
+                    onValueChange={(value) => handleSelectChange('roleId', value)}
+                  >
+                    <SelectTrigger id="roleId" className={hasFieldError('roleId') || validationErrors.roleId ? 'border-red-500' : ''}>
+                      <SelectValue placeholder="Sélectionner un rôle" />
                     </SelectTrigger>
                     <SelectContent>
-                      {tenants.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          {t.name}
+                      {roles.map((r) => (
+                        <SelectItem key={r.id} value={r.id}>
+                          {r.name} - {r.description || ''}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {errors.tenant && (
-                    <p className="text-sm text-red-500">{errors.tenant}</p>
+                  {hasFieldError('roleId') && (
+                    <p className="text-sm text-red-500">{getFieldError('roleId')}</p>
+                  )}
+                  {validationErrors.roleId && (
+                    <p className="text-sm text-red-500">{validationErrors.roleId}</p>
                   )}
                 </div>
-              )}
-              
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <Label htmlFor="isActive">Utilisateur actif</Label>
+                
+                {formData.roleId && roles.find(r => r.id === formData.roleId)?.name !== 'SUPER_ADMIN' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="tenantId" className={hasFieldError('tenantId') || validationErrors.tenantId ? 'text-red-500' : ''}>
+                      Locataire
+                    </Label>
+                    <Select 
+                      value={formData.tenantId || ''} 
+                      onValueChange={(value) => handleSelectChange('tenantId', value)}
+                    >
+                      <SelectTrigger id="tenantId" className={hasFieldError('tenantId') || validationErrors.tenantId ? 'border-red-500' : ''}>
+                        <SelectValue placeholder="Sélectionner un locataire" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tenants.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {hasFieldError('tenantId') && (
+                      <p className="text-sm text-red-500">{getFieldError('tenantId')}</p>
+                    )}
+                    {validationErrors.tenantId && (
+                      <p className="text-sm text-red-500">{validationErrors.tenantId}</p>
+                    )}
+                  </div>
+                )}
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="isActive"
+                    checked={formData.isActive || false}
+                    onCheckedChange={(checked) => handleCheckboxChange('isActive', checked === true)}
+                  />
+                  <Label htmlFor="isActive" className="cursor-pointer">
+                    Utilisateur actif
+                  </Label>
+                </div>
               </div>
-            </div>
+            )}
           </CardContent>
           <CardFooter className="flex justify-between">
             <Button variant="outline" type="button" asChild>
               <Link href="/admin/users">Annuler</Link>
             </Button>
-            <Button type="submit">Créer l&apos;Utilisateur</Button>
+            <Button type="submit" disabled={loading || loadingRoles || loadingTenants}>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Création en cours...
+                </>
+              ) : (
+                'Créer l&apos;Utilisateur'
+              )}
+            </Button>
           </CardFooter>
         </form>
       </Card>

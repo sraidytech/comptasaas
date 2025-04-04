@@ -22,6 +22,11 @@ import {
 import { LivreType, LivreMonth } from '@prisma/client';
 import { SuperAdminGuard } from './guards/super-admin.guard';
 import { LivreTypesService } from './livre-types.service';
+import {
+  CreateLivreTypeDto,
+  UpdateLivreTypeDto,
+  AddLivreMonthsDto,
+} from './dto';
 
 // Define interfaces for API
 interface LivreTypeWithCounts extends LivreType {
@@ -30,24 +35,6 @@ interface LivreTypeWithCounts extends LivreType {
     livreMonths?: number;
   };
   livreMonths?: LivreMonth[];
-}
-
-// Define DTOs for API documentation
-class CreateLivreTypeDto {
-  name: string;
-  description?: string;
-  articles?: string;
-  months?: number[];
-}
-
-class UpdateLivreTypeDto {
-  name?: string;
-  description?: string;
-  articles?: string;
-}
-
-class AddMonthsDto {
-  months: number[];
 }
 
 @ApiTags('admin/livre-types')
@@ -153,12 +140,12 @@ export class LivreTypesController {
   })
   @ApiResponse({ status: 404, description: 'Livre type not found' })
   @ApiParam({ name: 'id', description: 'Livre Type ID' })
-  @ApiBody({ type: AddMonthsDto })
+  @ApiBody({ type: AddLivreMonthsDto })
   @HttpCode(HttpStatus.OK)
   @Post(':id/months')
   async addMonths(
     @Param('id') id: string,
-    @Body() addMonthsDto: AddMonthsDto,
+    @Body() addMonthsDto: AddLivreMonthsDto,
   ): Promise<LivreTypeWithCounts> {
     if (
       !addMonthsDto.months ||
@@ -191,12 +178,12 @@ export class LivreTypesController {
   })
   @ApiResponse({ status: 404, description: 'Livre type not found' })
   @ApiParam({ name: 'id', description: 'Livre Type ID' })
-  @ApiBody({ type: AddMonthsDto })
+  @ApiBody({ type: AddLivreMonthsDto })
   @HttpCode(HttpStatus.OK)
   @Delete(':id/months')
   async removeMonths(
     @Param('id') id: string,
-    @Body() removeMonthsDto: AddMonthsDto,
+    @Body() removeMonthsDto: AddLivreMonthsDto,
   ): Promise<LivreTypeWithCounts> {
     if (
       !removeMonthsDto.months ||

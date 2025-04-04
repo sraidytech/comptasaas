@@ -58,20 +58,40 @@ export const livreTypesApi = {
   // Create a new livre type
   create: async (data: CreateLivreTypeDto): Promise<LivreType> => {
     try {
-      // Extract months from the data to match the backend controller's expectation
+      console.log('Creating livre type with data:', data);
+      
+      // Extract months from the data to handle them separately
       const { months, ...livreTypeData } = data;
       
       // First create the livre type without months
       const createdType = await apiClient.post<LivreType>('admin/livre-types', livreTypeData);
       
-      // If months are provided, add them in a separate request
+      console.log('Created livre type:', createdType);
+      
+      // If months are provided, add them to the livre type
       if (months && months.length > 0) {
-        return await apiClient.post<LivreType>(`admin/livre-types/${createdType.id}/months`, { months });
+        console.log('Adding months to livre type:', months);
+        
+        // Add months to the livre type
+        await apiClient.post<LivreType>(`admin/livre-types/${createdType.id}/months`, {
+          months
+        });
+        
+        // Get the updated livre type with months
+        const updatedType = await apiClient.get<LivreType>(`admin/livre-types/${createdType.id}`);
+        return updatedType;
       }
       
       return createdType;
     } catch (error) {
       console.error('Error creating livre type:', error);
+      
+      // Check if it's an Axios error with response data
+      if (error && typeof error === 'object' && 'response' in error && 
+          error.response && typeof error.response === 'object' && 'data' in error.response) {
+        console.error('Error response data:', error.response.data);
+      }
+      
       throw error;
     }
   },

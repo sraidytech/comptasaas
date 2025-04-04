@@ -46,9 +46,27 @@ export const tenantsApi = {
   // Create a new tenant
   create: async (data: CreateTenantDto): Promise<Tenant> => {
     try {
-      return await apiClient.post<Tenant, CreateTenantDto>('admin/tenants', data);
+      console.log('Creating tenant with data:', data);
+      
+      // Convert the DTO to a Record<string, unknown> to satisfy TypeScript
+      const requestData: Record<string, unknown> = {
+        name: data.name,
+        description: data.description
+      };
+      
+      const createdTenant = await apiClient.post<Tenant>('admin/tenants', requestData);
+      
+      console.log('Created tenant:', createdTenant);
+      return createdTenant;
     } catch (error) {
       console.error('Error creating tenant:', error);
+      
+      // Check if it's an Axios error with response data
+      if (error && typeof error === 'object' && 'response' in error && 
+          error.response && typeof error.response === 'object' && 'data' in error.response) {
+        console.error('Error response data:', error.response.data);
+      }
+      
       throw error;
     }
   },

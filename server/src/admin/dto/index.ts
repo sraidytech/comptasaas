@@ -3,3 +3,8 @@ export * from './update-tenant.dto';
 export * from './create-declaration-type.dto';
 export * from './update-declaration-type.dto';
 export * from './add-months.dto';
+export * from './create-livre-type.dto';
+export * from './update-livre-type.dto';
+export * from './add-livre-months.dto';
+export * from './create-role.dto';
+export * from './update-role.dto';

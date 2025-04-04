@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -16,8 +16,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Search, Lock } from 'lucide-react';
+import { Search, Lock, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -26,8 +27,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-// This would normally come from an API call
-const permissions = [
+import { permissionsApi, Permission } from '@/lib/api';
+import { useAsync } from '@/lib/hooks';
+
+// Mock data for fallback
+const mockPermissions = [
   {
     id: '1',
     name: 'user:create',
@@ -93,6 +97,27 @@ const permissions = [
   },
 ];
 
+// UI representation of a permission
+interface UIPermission {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  roles: string[];
+}
+
+// Helper function to categorize permissions based on their name
+const categorizePermission = (name: string): string => {
+  if (name.startsWith('user:')) return 'Gestion des Utilisateurs';
+  if (name.startsWith('client:')) return 'Gestion des Clients';
+  if (name.startsWith('declaration:')) return 'Gestion des Déclarations';
+  if (name.startsWith('livre:')) return 'Gestion des Livres';
+  if (name.startsWith('task:')) return 'Gestion des Tâches';
+  if (name.startsWith('report:')) return 'Rapports et Analyses';
+  if (name.startsWith('system:')) return 'Configuration Système';
+  return 'Autre';
+};
+
 const categories = [
   'Tous',
   'Gestion des Utilisateurs',
@@ -107,6 +132,58 @@ const categories = [
 export default function PermissionsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('Tous');
+  const [permissions, setPermissions] = useState<UIPermission[]>([]);
+  
+  // Use the useAsync hook to fetch permissions
+  const { data: apiPermissions, loading, error, execute: fetchPermissions } = useAsync<Permission[]>(
+    async () => {
+      try {
+        // Try to fetch from API
+        return await permissionsApi.getAll();
+      } catch (error) {
+        console.error('Error fetching permissions from API:', error);
+        // Return empty array if API fails
+        return [];
+      }
+    },
+    true // Fetch immediately
+  );
+  
+  // When API data changes, update the state
+  useEffect(() => {
+    if (apiPermissions && Array.isArray(apiPermissions) && apiPermissions.length > 0) {
+      try {
+        // Process API data
+        const processedPermissions = apiPermissions.map(permission => {
+          // For now, we'll assign mock roles since we don't have that info from the API
+          // In a real implementation, you would fetch role-permission mappings
+          const mockRoles = ['SUPER_ADMIN'];
+          if (!permission.name.includes('delete')) {
+            mockRoles.push('ADMIN');
+          }
+          if (permission.name.includes('read')) {
+            mockRoles.push('TEAM_MANAGER', 'EMPLOYEE');
+          }
+          
+          return {
+            id: permission.id,
+            name: permission.name,
+            description: permission.description || 'No description',
+            category: categorizePermission(permission.name),
+            roles: mockRoles,
+          } as UIPermission;
+        });
+        setPermissions(processedPermissions);
+      } catch (error) {
+        console.error('Error processing API data:', error);
+        // Use mock data if processing fails
+        setPermissions(mockPermissions);
+      }
+    } else {
+      // Use mock data if API returns empty or invalid data
+      setPermissions(mockPermissions);
+    }
+  }, [apiPermissions]);
   
   const filteredPermissions = permissions.filter(permission => 
     (searchTerm === '' || 
@@ -155,52 +232,79 @@ export default function PermissionsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nom</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Catégorie</TableHead>
-                <TableHead>Rôles</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredPermissions.map((permission) => (
-                <TableRow key={permission.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <Lock className="h-4 w-4 text-gray-500" />
-                      {permission.name}
-                    </div>
-                  </TableCell>
-                  <TableCell>{permission.description}</TableCell>
-                  <TableCell>{permission.category}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {permission.roles.map((role) => (
-                        <span 
-                          key={role} 
-                          className={`px-2 py-1 rounded text-xs font-medium ${
-                            role === 'SUPER_ADMIN' 
-                              ? 'bg-purple-100 text-purple-800' 
-                              : role === 'ADMIN' 
-                              ? 'bg-blue-100 text-blue-800' 
-                              : role === 'TEAM_MANAGER' 
-                              ? 'bg-green-100 text-green-800' 
-                              : role === 'EMPLOYEE'
-                              ? 'bg-gray-100 text-gray-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}
-                        >
-                          {role}
-                        </span>
-                      ))}
-                    </div>
-                  </TableCell>
+          {loading ? (
+            <div className="flex justify-center items-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">Chargement des permissions...</span>
+            </div>
+          ) : error ? (
+            <div className="bg-red-50 text-red-700 p-4 rounded-md">
+              Une erreur est survenue lors du chargement des permissions.
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="ml-4"
+                onClick={() => fetchPermissions()}
+              >
+                Réessayer
+              </Button>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Catégorie</TableHead>
+                  <TableHead>Rôles</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredPermissions.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                      Aucune permission trouvée
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredPermissions.map((permission) => (
+                    <TableRow key={permission.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <Lock className="h-4 w-4 text-gray-500" />
+                          {permission.name}
+                        </div>
+                      </TableCell>
+                      <TableCell>{permission.description}</TableCell>
+                      <TableCell>{permission.category}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {permission.roles.map((role) => (
+                            <span 
+                              key={role} 
+                              className={`px-2 py-1 rounded text-xs font-medium ${
+                                role === 'SUPER_ADMIN' 
+                                  ? 'bg-purple-100 text-purple-800' 
+                                  : role === 'ADMIN' 
+                                  ? 'bg-blue-100 text-blue-800' 
+                                  : role === 'TEAM_MANAGER' 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : role === 'EMPLOYEE'
+                                  ? 'bg-gray-100 text-gray-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }`}
+                            >
+                              {role}
+                            </span>
+                          ))}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

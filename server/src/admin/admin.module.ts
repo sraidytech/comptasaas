@@ -11,10 +11,15 @@ import { LivreTypesService } from './livre-types.service';
 import { LivreTypesController } from './livre-types.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { SuperAdminGuard } from './guards/super-admin.guard';
+import { AdminUsersController } from './users.controller';
+import { RolesController } from './roles.controller';
+import { PermissionsController } from './permissions.controller';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
     PrismaModule,
+    UsersModule,
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET,
@@ -25,6 +30,9 @@ import { SuperAdminGuard } from './guards/super-admin.guard';
     AdminController,
     DeclarationTypesController,
     LivreTypesController,
+    AdminUsersController,
+    RolesController,
+    PermissionsController,
   ],
   providers: [
     AdminService,

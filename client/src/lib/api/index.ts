@@ -7,6 +7,7 @@ export { usersApi } from './users';
 export { rolesApi } from './roles';
 export { declarationTypesApi } from './declaration-types';
 export { livreTypesApi } from './livre-types';
+export { permissionsApi } from './permissions';
 
 // Export interfaces
 export type { Tenant, CreateTenantDto, UpdateTenantDto } from './tenants';
@@ -19,9 +20,9 @@ export type {
 } from './users';
 export type { 
   Role, 
-  Permission, 
   CreateRoleDto, 
-  UpdateRoleDto 
+  UpdateRoleDto,
+  // Remove Permission from roles export since we're exporting it from permissions.ts
 } from './roles';
 export type { 
   DeclarationType, 
@@ -35,3 +36,4 @@ export type {
   CreateLivreTypeDto, 
   UpdateLivreTypeDto 
 } from './livre-types';
+export type { Permission } from './permissions';

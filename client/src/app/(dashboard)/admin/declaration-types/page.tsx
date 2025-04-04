@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { DeleteDialog } from '@/components/ui/delete-dialog';
+import { toast } from 'sonner';
 import {
   Card,
   CardContent,
@@ -34,36 +36,8 @@ interface MockDeclarationType {
   updatedAt: string;
 }
 
-// Mock data for fallback
-const mockDeclarationTypes: MockDeclarationType[] = [
-  {
-    id: '1',
-    name: 'TVA',
-    description: 'Déclaration de la taxe sur la valeur ajoutée',
-    articles: 'Art. 89, 90',
-    months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-    createdAt: '2025-01-15T00:00:00.000Z',
-    updatedAt: '2025-01-15T00:00:00.000Z',
-  },
-  {
-    id: '2',
-    name: 'IS',
-    description: 'Déclaration de l\'impôt sur les sociétés',
-    articles: 'Art. 20, 21',
-    months: [3, 6, 9, 12],
-    createdAt: '2025-01-15T00:00:00.000Z',
-    updatedAt: '2025-01-15T00:00:00.000Z',
-  },
-  {
-    id: '3',
-    name: 'IR',
-    description: 'Déclaration de l\'impôt sur le revenu',
-    articles: 'Art. 73, 74',
-    months: [1, 4, 7, 10],
-    createdAt: '2025-01-15T00:00:00.000Z',
-    updatedAt: '2025-01-15T00:00:00.000Z',
-  },
-];
+// Empty array for fallback
+const mockDeclarationTypes: MockDeclarationType[] = [];
 
 // UI representation of a declaration type (used in the component)
 type UIDeclarationType = MockDeclarationType;
@@ -221,15 +195,27 @@ export default function DeclarationTypesPage() {
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button variant="outline" size="sm" asChild>
-                            <Link href={`/admin/declaration-types/${type.id}`}>
-                              Détails
-                            </Link>
-                          </Button>
-                          <Button variant="outline" size="sm" asChild>
-                            <Link href={`/admin/declaration-types/${type.id}/edit`}>
+                            <Link href={`/admin/declaration-types/edit/${type.id}`}>
                               Modifier
                             </Link>
                           </Button>
+                          <DeleteDialog
+                            title="Confirmer la suppression"
+                            description={`Êtes-vous sûr de vouloir supprimer le type de déclaration "${type.name}" ?`}
+                            itemName={type.name}
+                            onDelete={async () => {
+                              try {
+                                await declarationTypesApi.delete(type.id);
+                                toast.success(`Type de déclaration "${type.name}" supprimé avec succès`);
+                                // Refresh the list
+                                fetchDeclarationTypes();
+                              } catch (error) {
+                                console.error(`Error deleting declaration type with ID ${type.id}:`, error);
+                                toast.error(`Erreur lors de la suppression du type de déclaration "${type.name}"`);
+                                throw error; // Rethrow to let DeleteDialog handle the error state
+                              }
+                            }}
+                          />
                         </div>
                       </TableCell>
                     </TableRow>

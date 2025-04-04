@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { DeleteDialog } from '@/components/ui/delete-dialog';
+import { toast } from 'sonner';
 import {
   Card,
   CardContent,
@@ -169,15 +171,27 @@ export default function TenantsPage() {
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button variant="outline" size="sm" asChild>
-                            <Link href={`/admin/tenants/${tenant.id}`}>
-                              Détails
-                            </Link>
-                          </Button>
-                          <Button variant="outline" size="sm" asChild>
-                            <Link href={`/admin/tenants/${tenant.id}/edit`}>
+                            <Link href={`/admin/tenants/edit/${tenant.id}`}>
                               Modifier
                             </Link>
                           </Button>
+                          <DeleteDialog
+                            title="Confirmer la suppression"
+                            description={`Êtes-vous sûr de vouloir supprimer le locataire "${tenant.name}" ?`}
+                            itemName={tenant.name}
+                            onDelete={async () => {
+                              try {
+                                await tenantsApi.delete(tenant.id);
+                                toast.success(`Locataire "${tenant.name}" supprimé avec succès`);
+                                // Refresh the list
+                                fetchTenants();
+                              } catch (error) {
+                                console.error(`Error deleting tenant with ID ${tenant.id}:`, error);
+                                toast.error(`Erreur lors de la suppression du locataire "${tenant.name}"`);
+                                throw error; // Rethrow to let DeleteDialog handle the error state
+                              }
+                            }}
+                          />
                         </div>
                       </TableCell>
                     </TableRow>

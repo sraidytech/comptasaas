@@ -92,9 +92,32 @@ export const usersApi = {
   // Create a new user
   create: async (data: CreateUserDto): Promise<User> => {
     try {
-      return await apiClient.post<User, CreateUserDto>('admin/users', data);
+      console.log('Creating user with data:', data);
+      
+      // Convert the DTO to a Record<string, unknown> to satisfy TypeScript
+      const requestData: Record<string, unknown> = {
+        tenantId: data.tenantId,
+        roleId: data.roleId,
+        username: data.username,
+        email: data.email,
+        password: data.password,
+        imageUrl: data.imageUrl,
+        isActive: data.isActive
+      };
+      
+      const createdUser = await apiClient.post<User>('admin/users', requestData);
+      
+      console.log('Created user:', createdUser);
+      return createdUser;
     } catch (error) {
       console.error('Error creating user:', error);
+      
+      // Check if it's an Axios error with response data
+      if (error && typeof error === 'object' && 'response' in error && 
+          error.response && typeof error.response === 'object' && 'data' in error.response) {
+        console.error('Error response data:', error.response.data);
+      }
+      
       throw error;
     }
   },

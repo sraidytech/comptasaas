@@ -18,6 +18,7 @@ interface CreateLivreTypeDto {
   name: string;
   description?: string;
   articles?: string;
+  months?: number[];
 }
 
 interface UpdateLivreTypeDto {
