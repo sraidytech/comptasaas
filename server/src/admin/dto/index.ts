@@ -8,3 +8,4 @@ export * from './update-livre-type.dto';
 export * from './add-livre-months.dto';
 export * from './create-role.dto';
 export * from './update-role.dto';
+export * from './filter-users.dto';

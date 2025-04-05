@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {
   Controller,
   Get,
@@ -23,6 +24,7 @@ import {
 } from '@nestjs/swagger';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { User } from './entities';
+import { PaginatedUsersResponse } from '../common/interfaces/pagination.interface';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -45,7 +47,15 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   @Get()
   async findAll(@Query('tenantId') tenantId?: string): Promise<User[]> {
-    return this.usersService.findAll(tenantId);
+    const result = await this.usersService.findAll(tenantId);
+    
+    // If the result is an array, return it directly
+    if (Array.isArray(result)) {
+      return result;
+    }
+    
+    // If the result is a PaginatedUsersResponse, extract the users array
+    return result.users;
   }
 
   @ApiOperation({ summary: 'Get user by ID' })

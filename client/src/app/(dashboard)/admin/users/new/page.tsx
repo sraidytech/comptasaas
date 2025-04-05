@@ -27,63 +27,17 @@ import { toast } from 'sonner';
 import { usersApi, rolesApi, tenantsApi, CreateUserDto, Role, Tenant } from '@/lib/api';
 import { useAsync, useApiError } from '@/lib/hooks';
 
-// Mock data for fallback
-const mockTenants: Tenant[] = [
-  {
-    id: '1',
-    name: 'Default Tenant',
-    description: '',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    name: 'Second Tenant',
-    description: '',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
-
-// Mock data for fallback
-const mockRoles: Role[] = [
-  {
-    id: '1',
-    name: 'SUPER_ADMIN',
-    description: 'Accès complet au système',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    name: 'ADMIN',
-    description: 'Accès complet à un locataire',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    name: 'TEAM_MANAGER',
-    description: 'Gestion d\'une équipe',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '4',
-    name: 'EMPLOYEE',
-    description: 'Accès limité aux clients assignés',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
+// Empty arrays for initial state
+const emptyTenants: Tenant[] = [];
+const emptyRoles: Role[] = [];
 
 export default function NewUserPage() {
   const router = useRouter();
   const { getFieldError, hasFieldError, clearError } = useApiError();
   
   // State for roles and tenants
-  const [roles, setRoles] = useState<Role[]>(mockRoles);
-  const [tenants, setTenants] = useState<Tenant[]>(mockTenants);
+  const [roles, setRoles] = useState<Role[]>(emptyRoles);
+  const [tenants, setTenants] = useState<Tenant[]>(emptyTenants);
   
   // Form state
   const [formData, setFormData] = useState<CreateUserDto & { confirmPassword: string }>({
@@ -106,7 +60,8 @@ export default function NewUserPage() {
         return await rolesApi.getAll();
       } catch (error) {
         console.error('Error fetching roles:', error);
-        return mockRoles;
+        toast.error('Erreur lors du chargement des rôles');
+        return [];
       }
     },
     true // Fetch immediately
@@ -119,7 +74,8 @@ export default function NewUserPage() {
         return await tenantsApi.getAll();
       } catch (error) {
         console.error('Error fetching tenants:', error);
-        return mockTenants;
+        toast.error('Erreur lors du chargement des locataires');
+        return [];
       }
     },
     true // Fetch immediately

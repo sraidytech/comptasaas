@@ -272,7 +272,7 @@ export default function EditUserPage() {
                     <SelectValue placeholder="Sélectionner un locataire" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Aucun (Super Admin)</SelectItem>
+                    <SelectItem value="none">Aucun (Super Admin)</SelectItem>
                     {tenants.map((tenant) => (
                       <SelectItem key={tenant.id} value={tenant.id}>
                         {tenant.name}

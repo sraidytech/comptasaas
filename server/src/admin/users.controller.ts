@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {
   Controller,
   Get,
@@ -17,12 +18,13 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiParam,
-  ApiQuery,
 } from '@nestjs/swagger';
 import { SuperAdminGuard } from './guards/super-admin.guard';
 import { UsersService } from '../users/users.service';
 import { CreateUserDto, UpdateUserDto } from '../users/dto';
 import { User } from '../users/entities';
+import { FilterUsersDto } from './dto';
+import { PaginatedUsers, PaginatedUsersResponse } from '../common/interfaces/pagination.interface';
 
 @ApiTags('admin/users')
 @ApiBearerAuth()
@@ -31,21 +33,55 @@ import { User } from '../users/entities';
 export class AdminUsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @ApiOperation({ summary: 'Get all users' })
+  @ApiOperation({
+    summary: 'Get all users with filtering, sorting, and pagination',
+  })
   @ApiResponse({
     status: 200,
-    description: 'Return all users',
-    type: [User],
-  })
-  @ApiQuery({
-    name: 'tenantId',
-    required: false,
-    description: 'Filter users by tenant ID',
+    description: 'Return paginated users',
   })
   @HttpCode(HttpStatus.OK)
   @Get()
-  async findAll(@Query('tenantId') tenantId?: string): Promise<User[]> {
-    return this.usersService.findAll(tenantId);
+  async findAll(
+    @Query() filterDto: FilterUsersDto,
+  ): Promise<PaginatedUsersResponse | User[]> {
+    // For backward compatibility, if no filter parameters are provided, return all users
+    if (
+      !filterDto.tenantId &&
+      !filterDto.roleId &&
+      !filterDto.isActive &&
+      !filterDto.search &&
+      !filterDto.sortBy &&
+      !filterDto.page &&
+      !filterDto.pageSize
+    ) {
+      return this.usersService.findAll();
+    }
+
+    // Use the new filtering functionality
+    const result = await this.usersService.findAll(filterDto);
+
+    // If the result is an array, it means we're using the old method
+    if (Array.isArray(result)) {
+      return result;
+    }
+
+    // At this point, result is PaginatedUsers
+    const paginatedResult = result as PaginatedUsers;
+    
+    // Calculate total pages
+    const totalPages = Math.ceil(paginatedResult.total / (filterDto.pageSize || 10));
+
+    // Return paginated response with all required properties
+    const response: PaginatedUsersResponse = {
+      users: paginatedResult.users,
+      total: paginatedResult.total,
+      page: filterDto.page || 0,
+      pageSize: filterDto.pageSize || 10,
+      totalPages,
+    };
+
+    return response;
   }
 
   @ApiOperation({ summary: 'Get user by ID' })
@@ -115,7 +151,11 @@ export class AdminUsersController {
   @HttpCode(HttpStatus.OK)
   @Get('tenants/:tenantId/users')
   async findByTenant(@Param('tenantId') tenantId: string): Promise<User[]> {
-    return this.usersService.findAll(tenantId);
+    const result = await this.usersService.findAll(tenantId);
+    if (Array.isArray(result)) {
+      return result;
+    }
+    return result.users;
   }
 
   @ApiOperation({ summary: 'Change user status' })

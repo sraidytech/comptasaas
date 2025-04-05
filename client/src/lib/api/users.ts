@@ -24,6 +24,27 @@ export interface User {
   };
 }
 
+// Define the paginated users response interface
+export interface PaginatedUsersResponse {
+  users: User[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+// Define the filter users DTO
+export interface FilterUsersDto {
+  tenantId?: string;
+  roleId?: string;
+  isActive?: boolean;
+  search?: string;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
+  page?: number;
+  pageSize?: number;
+}
+
 // Define the create user DTO
 export interface CreateUserDto {
   tenantId?: string;
@@ -60,9 +81,28 @@ export interface UpdateStatusDto {
 // User API functions
 export const usersApi = {
   // Get all users (for super admin)
-  getAll: async (): Promise<User[]> => {
+  getAll: async (filters?: FilterUsersDto): Promise<User[] | PaginatedUsersResponse> => {
     try {
-      return await apiClient.get<User[]>('admin/users');
+      if (!filters) {
+        return await apiClient.get<User[]>('admin/users');
+      }
+      
+      // Build query parameters
+      const params = new URLSearchParams();
+      
+      if (filters.tenantId) params.append('tenantId', filters.tenantId);
+      if (filters.roleId) params.append('roleId', filters.roleId);
+      if (filters.isActive !== undefined) params.append('isActive', String(filters.isActive));
+      if (filters.search) params.append('search', filters.search);
+      if (filters.sortBy) params.append('sortBy', filters.sortBy);
+      if (filters.sortDirection) params.append('sortDirection', filters.sortDirection);
+      if (filters.page !== undefined) params.append('page', String(filters.page));
+      if (filters.pageSize !== undefined) params.append('pageSize', String(filters.pageSize));
+      
+      const queryString = params.toString();
+      const url = queryString ? `admin/users?${queryString}` : 'admin/users';
+      
+      return await apiClient.get<PaginatedUsersResponse>(url);
     } catch (error) {
       console.error('Error fetching users:', error);
       throw error;

@@ -16,7 +16,9 @@ export type {
   CreateUserDto, 
   UpdateUserDto, 
   ChangePasswordDto, 
-  UpdateStatusDto 
+  UpdateStatusDto,
+  FilterUsersDto,
+  PaginatedUsersResponse
 } from './users';
 export type { 
   Role, 
