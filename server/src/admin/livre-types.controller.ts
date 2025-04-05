@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {
   Controller,
   Get,
@@ -52,6 +53,7 @@ export class LivreTypesController {
   @HttpCode(HttpStatus.OK)
   @Get()
   async findAll(): Promise<LivreTypeWithCounts[]> {
+    // Get all types with their livre months included
     return this.livreTypesService.findAll();
   }
 

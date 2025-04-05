@@ -34,6 +34,7 @@ export class LivreTypesService {
   async findAll(): Promise<LivreTypeWithCounts[]> {
     return this.prisma.livreType.findMany({
       include: {
+        livreMonths: true,
         _count: {
           select: {
             livres: true,

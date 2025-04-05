@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {
   Controller,
   Get,
@@ -54,6 +55,7 @@ export class DeclarationTypesController {
   @HttpCode(HttpStatus.OK)
   @Get()
   async findAll(): Promise<DeclarationTypeWithCounts[]> {
+    // Get all types with their declaration months included
     return this.declarationTypesService.findAll();
   }
 

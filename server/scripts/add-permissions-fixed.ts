@@ -165,7 +165,7 @@ async function main() {
   // Create all permissions
   for (const permissionData of permissions) {
     try {
-      // Try to find the permission first
+      // Try to find the permission first by name
       const existingPermission = await prisma.permission.findUnique({
         where: { name: permissionData.name },
       });

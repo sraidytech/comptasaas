@@ -33,6 +33,7 @@ export class DeclarationTypesService {
   async findAll(): Promise<DeclarationTypeWithCounts[]> {
     return this.prisma.declarationType.findMany({
       include: {
+        declarationMonths: true,
         _count: {
           select: {
             declarations: true,

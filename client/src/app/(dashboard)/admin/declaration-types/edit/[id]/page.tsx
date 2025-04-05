@@ -45,7 +45,17 @@ export default function EditDeclarationTypePage() {
     error: fetchError,
     execute: fetchDeclarationType 
   } = useAsync<DeclarationType>(
-    async () => declarationTypesApi.getById(declarationTypeId),
+    async () => {
+      try {
+        console.log('Fetching declaration type with ID:', declarationTypeId);
+        const data = await declarationTypesApi.getById(declarationTypeId);
+        console.log('Fetched declaration type:', data);
+        return data;
+      } catch (error) {
+        console.error('Error fetching declaration type:', error);
+        throw error;
+      }
+    },
     true // Fetch immediately
   );
 
@@ -60,6 +70,8 @@ export default function EditDeclarationTypePage() {
   // Update form data when declaration type data is loaded
   useEffect(() => {
     if (declarationType) {
+      console.log('Setting form data from declaration type:', declarationType);
+      
       setFormData({
         name: declarationType.name,
         description: declarationType.description || '',
@@ -67,8 +79,14 @@ export default function EditDeclarationTypePage() {
       });
 
       // Set selected months
-      if (declarationType.months && Array.isArray(declarationType.months)) {
-        setSelectedMonths(declarationType.months.map(m => m.month));
+      if (declarationType.declarationMonths && Array.isArray(declarationType.declarationMonths)) {
+        console.log('Setting selected months:', declarationType.declarationMonths);
+        const monthNumbers = declarationType.declarationMonths.map(m => m.month);
+        console.log('Extracted month numbers:', monthNumbers);
+        setSelectedMonths(monthNumbers);
+      } else {
+        console.log('No months found in declaration type or not an array');
+        setSelectedMonths([]);
       }
     }
   }, [declarationType]);
@@ -107,9 +125,9 @@ export default function EditDeclarationTypePage() {
       
       if (result) {
         // Update months if they've changed
-        const currentMonths = declarationType?.months?.map(m => m.month) || [];
-        const monthsToAdd = selectedMonths.filter(m => !currentMonths.includes(m));
-        const monthsToRemove = currentMonths.filter(m => !selectedMonths.includes(m));
+        const currentMonths = declarationType?.declarationMonths?.map((m: { month: number }) => m.month) || [];
+        const monthsToAdd = selectedMonths.filter((m: number) => !currentMonths.includes(m));
+        const monthsToRemove = currentMonths.filter((m: number) => !selectedMonths.includes(m));
         
         // Add new months
         if (monthsToAdd.length > 0) {

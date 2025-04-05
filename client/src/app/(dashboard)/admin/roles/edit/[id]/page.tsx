@@ -18,7 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { rolesApi, UpdateRoleDto, Role, permissionsApi, Permission } from '@/lib/api';
+import { rolesApi, UpdateRoleDto, Role, RolePermission, permissionsApi, Permission } from '@/lib/api';
 import { useAsync, useApiError } from '@/lib/hooks';
 
 export default function EditRolePage() {
@@ -44,16 +44,36 @@ export default function EditRolePage() {
     error: fetchError,
     execute: fetchRole 
   } = useAsync<Role>(
-    async () => rolesApi.getById(roleId),
+    async () => {
+      try {
+        console.log('Fetching role with ID:', roleId);
+        const data = await rolesApi.getById(roleId);
+        console.log('Fetched role:', data);
+        return data;
+      } catch (error) {
+        console.error('Error fetching role:', error);
+        throw error;
+      }
+    },
     true // Fetch immediately
   );
 
   // Use the useAsync hook to fetch permissions
   const { 
     data: apiPermissions, 
-    loading: loadingPermissions 
+    loading: loadingPermissions
   } = useAsync<Permission[]>(
-    async () => permissionsApi.getAll(),
+    async () => {
+      try {
+        console.log('Fetching all permissions');
+        const data = await permissionsApi.getAll();
+        console.log('Fetched permissions:', data);
+        return data;
+      } catch (error) {
+        console.error('Error fetching permissions:', error);
+        throw error;
+      }
+    },
     true // Fetch immediately
   );
 
@@ -64,20 +84,17 @@ export default function EditRolePage() {
   } = useAsync<Role>(
     async (data: unknown) => {
       const roleData = data as UpdateRoleDto;
-      const updatedRole = await rolesApi.update(roleId, roleData);
       
-      // Update permissions if they've changed
-      const currentPermissionIds = role?.permissions?.map(p => p.id) || [];
-      const permissionsToAdd = selectedPermissionIds.filter(id => !currentPermissionIds.includes(id));
-      const permissionsToRemove = currentPermissionIds.filter(id => !selectedPermissionIds.includes(id));
+      // Include permissionIds in the update data
+      const updateData: UpdateRoleDto = {
+        ...roleData,
+        permissionIds: selectedPermissionIds
+      };
       
-      if (permissionsToAdd.length > 0) {
-        await rolesApi.addPermissions(roleId, permissionsToAdd);
-      }
+      console.log('Updating role with data:', updateData);
       
-      if (permissionsToRemove.length > 0) {
-        await rolesApi.removePermissions(roleId, permissionsToRemove);
-      }
+      // Update the role with all data including permissions
+      const updatedRole = await rolesApi.update(roleId, updateData);
       
       return updatedRole;
     }
@@ -92,9 +109,15 @@ export default function EditRolePage() {
       });
 
       // Set selected permissions
+      // Handle both direct permissions array and rolePermissions array
       if (role.permissions && Array.isArray(role.permissions)) {
         setSelectedPermissionIds(role.permissions.map(p => p.id));
+      } else if (role.rolePermissions && Array.isArray(role.rolePermissions)) {
+        // Extract permissions from rolePermissions
+        setSelectedPermissionIds(role.rolePermissions.map((rp: RolePermission) => rp.permission.id));
       }
+      
+      console.log('Role permissions set:', role.permissions || role.rolePermissions?.map((rp: RolePermission) => rp.permission));
     }
   }, [role]);
 
@@ -186,9 +209,22 @@ export default function EditRolePage() {
   // Check if the role is a system role
   const isSystemRole = role?.name === 'SUPER_ADMIN' || role?.name === 'ADMIN' || role?.name === 'TEAM_MANAGER' || role?.name === 'EMPLOYEE';
 
-  // Group permissions by category
+  // Group permissions by name pattern
   const groupedPermissions = permissions.reduce((groups, permission) => {
-    const category = permission.category || 'Autres';
+    let category = 'Autres';
+    
+    if (permission.name.startsWith('user:')) {
+      category = 'Gestion des Utilisateurs';
+    } else if (permission.name.startsWith('client:')) {
+      category = 'Gestion des Clients';
+    } else if (permission.name.startsWith('declaration')) {
+      category = 'Gestion des Déclarations';
+    } else if (permission.name.startsWith('livre')) {
+      category = 'Gestion des Livres';
+    } else if (permission.name.startsWith('system:')) {
+      category = 'Configuration Système';
+    }
+    
     if (!groups[category]) {
       groups[category] = [];
     }

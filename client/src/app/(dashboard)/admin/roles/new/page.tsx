@@ -264,6 +264,12 @@ export default function NewRolePage() {
     }
     
     try {
+      // Log the form data being sent
+      console.log('Submitting role with data:', JSON.stringify(formData, null, 2));
+      console.log('permissionIds type:', typeof formData.permissionIds);
+      console.log('permissionIds value:', formData.permissionIds);
+      console.log('permissionIds length:', formData.permissionIds?.length);
+      
       // Submit form
       const result = await createRole(formData);
       
@@ -271,7 +277,7 @@ export default function NewRolePage() {
         toast.success('Rôle créé avec succès');
         
         // Log the created role
-        console.log('Role created:', result);
+        console.log('Role created:', JSON.stringify(result, null, 2));
         
         // Navigate back to roles list
         router.push('/admin/roles');

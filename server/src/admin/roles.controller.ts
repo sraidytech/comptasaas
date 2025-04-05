@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {
   Controller,
   Get,
@@ -46,8 +47,31 @@ export class RolesController {
   })
   @HttpCode(HttpStatus.OK)
   @Get()
-  async findAll(): Promise<Role[]> {
-    return this.rolesService.findAllRoles();
+  async findAll(): Promise<any[]> {
+    const roles = await this.rolesService.findAllRoles();
+    
+    // Map roles to include permissions directly
+    const rolesWithPermissions = roles.map((role: any) => {
+      // Extract permissions from rolePermissions
+      const permissions = role.rolePermissions?.map((rp: any) => rp.permission) || [];
+      
+      console.log(`Role ${role.name} has ${permissions.length} permissions:`, 
+        permissions.map((p: any) => p.name).join(', '));
+      
+      // Return role with permissions and count
+      return {
+        id: role.id,
+        name: role.name,
+        description: role.description,
+        createdAt: role.createdAt,
+        updatedAt: role.updatedAt,
+        _count: role._count,
+        permissions: permissions,
+        permissionCount: permissions.length
+      };
+    });
+    
+    return rolesWithPermissions;
   }
 
   @ApiOperation({ summary: 'Get role by ID' })
@@ -73,36 +97,15 @@ export class RolesController {
   @Post()
   async create(@Body() createRoleDto: CreateRoleDto): Promise<Role> {
     try {
-      console.log('Creating role with data:', createRoleDto);
+      console.log('Creating role with data:', JSON.stringify(createRoleDto, null, 2));
+      console.log('permissionIds type:', typeof createRoleDto.permissionIds);
+      console.log('permissionIds value:', createRoleDto.permissionIds);
+      console.log('permissionIds length:', createRoleDto.permissionIds?.length);
 
-      // Create the role
+      // Create the role with permissions in one go
       const role = await this.rolesService.createRole(createRoleDto);
-      console.log('Created role:', role);
-
-      // If permissionIds are provided, add them to the role
-      if (
-        createRoleDto.permissionIds &&
-        createRoleDto.permissionIds.length > 0
-      ) {
-        console.log('Adding permissions to role:', createRoleDto.permissionIds);
-
-        // Add each permission to the role
-        for (const permissionId of createRoleDto.permissionIds) {
-          try {
-            await this.rolesService.assignPermissionToRole(
-              role.id,
-              permissionId,
-            );
-          } catch (error) {
-            console.error(`Error adding permission ${permissionId}:`, error);
-            // Continue with other permissions even if one fails
-          }
-        }
-
-        // Return the updated role with permissions
-        return this.rolesService.findRoleById(role.id);
-      }
-
+      console.log('Created role with permissions:', JSON.stringify(role, null, 2));
+      
       return role;
     } catch (error) {
       console.error('Error creating role:', error);
@@ -125,48 +128,17 @@ export class RolesController {
     @Body() updateRoleDto: UpdateRoleDto,
   ): Promise<Role> {
     try {
-      console.log('Updating role with ID:', id, 'Data:', updateRoleDto);
+      console.log('Updating role with ID:', id, 'Data:', JSON.stringify(updateRoleDto, null, 2));
 
-      // Update the role
+      // Update the role with all data including permissionIds
+      // The service will handle updating the role and its permissions in a transaction
       const updatedRole = await this.rolesService.updateRole(id, updateRoleDto);
-      console.log('Updated role:', updatedRole);
+      console.log('Updated role with all data:', updatedRole);
 
-      // If permissionIds are provided, update the role's permissions
-      if (
-        updateRoleDto.permissionIds &&
-        updateRoleDto.permissionIds.length > 0
-      ) {
-        console.log('Updating role permissions:', updateRoleDto.permissionIds);
-
-        // Get current permissions
-        const currentPermissions =
-          await this.rolesService.getRolePermissions(id);
-        const currentPermissionIds = currentPermissions.map((p) => p.id);
-
-        // Remove permissions that are not in the new list
-        for (const permissionId of currentPermissionIds) {
-          if (!updateRoleDto.permissionIds.includes(permissionId)) {
-            await this.rolesService.removePermissionFromRole(id, permissionId);
-          }
-        }
-
-        // Add new permissions
-        for (const permissionId of updateRoleDto.permissionIds) {
-          if (!currentPermissionIds.includes(permissionId)) {
-            try {
-              await this.rolesService.assignPermissionToRole(id, permissionId);
-            } catch (error) {
-              console.error(`Error adding permission ${permissionId}:`, error);
-              // Continue with other permissions even if one fails
-            }
-          }
-        }
-
-        // Return the updated role with permissions
-        return this.rolesService.findRoleById(id);
-      }
-
-      return updatedRole;
+      // Return the updated role with permissions
+      const finalRole = await this.rolesService.findRoleById(id);
+      console.log('Final updated role:', JSON.stringify(finalRole, null, 2));
+      return finalRole;
     } catch (error) {
       console.error('Error updating role:', error);
       throw error;

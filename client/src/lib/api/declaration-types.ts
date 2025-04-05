@@ -8,7 +8,7 @@ export interface DeclarationType {
   articles?: string;
   createdAt: string;
   updatedAt: string;
-  months?: DeclarationMonth[];
+  declarationMonths?: DeclarationMonth[];
 }
 
 // Define the declaration month interface

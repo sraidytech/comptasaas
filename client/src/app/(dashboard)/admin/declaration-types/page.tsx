@@ -82,13 +82,19 @@ export default function DeclarationTypesPage() {
       try {
         // Process API data
         const processedTypes = (apiDeclarationTypes as DeclarationType[]).map(type => {
-          // Extract months from the type's months array if it exists
-          const months = type.months?.map(m => m.month) || [];
+          // Extract months from the type's declarationMonths array if it exists
+          console.log('Processing declaration type:', type);
+          console.log('Months data:', type.declarationMonths);
+          
+          const months = type.declarationMonths?.map(m => m.month) || [];
+          console.log('Extracted months:', months);
+          
           return {
             ...type,
             months
           } as UIDeclarationType;
         });
+        console.log('Processed declaration types:', processedTypes);
         setDeclarationTypes(processedTypes);
       } catch (error) {
         console.error('Error processing API data:', error);
@@ -181,14 +187,18 @@ export default function DeclarationTypesPage() {
                       <TableCell>{type.articles}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
-                          {type.months && type.months.map((month: number) => (
-                            <span 
-                              key={month} 
-                              className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium"
-                            >
-                              {new Date(2025, month - 1).toLocaleString('fr-FR', { month: 'short' })}
-                            </span>
-                          ))}
+                          {type.months && Array.isArray(type.months) && type.months.length > 0 ? (
+                            type.months.map((month: number) => (
+                              <span 
+                                key={month} 
+                                className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium"
+                              >
+                                {new Date(2025, month - 1).toLocaleString('fr-FR', { month: 'short' })}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-gray-400">Aucun mois</span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>{formatDate(type.createdAt)}</TableCell>

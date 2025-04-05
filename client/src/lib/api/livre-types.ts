@@ -8,7 +8,7 @@ export interface LivreType {
   articles?: string;
   createdAt: string;
   updatedAt: string;
-  months?: LivreMonth[];
+  livreMonths?: LivreMonth[];
 }
 
 // Define the livre month interface

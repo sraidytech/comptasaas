@@ -1,6 +1,14 @@
 import { apiClient } from './api-client';
 import { Permission } from './permissions';
 
+// Define the role permission interface
+export interface RolePermission {
+  id: string;
+  roleId: string;
+  permissionId: string;
+  permission: Permission;
+}
+
 // Define the role interface
 export interface Role {
   id: string;
@@ -9,6 +17,7 @@ export interface Role {
   createdAt: string;
   updatedAt: string;
   permissions?: Permission[];
+  rolePermissions?: RolePermission[];
 }
 
 // Define the create role DTO
@@ -52,36 +61,11 @@ export const rolesApi = {
     try {
       console.log('Creating role with data:', data);
       
-      // Extract permissionIds from the data to handle them separately
-      const { permissionIds, ...roleData } = data;
-      
-      // First create the role without permissions
-      const createdRole = await apiClient.post<Role>('admin/roles', roleData);
+      // Send the complete data including permissionIds to the backend
+      // Use object spread to create a new object that TypeScript will accept
+      const createdRole = await apiClient.post<Role>('admin/roles', { ...data });
       
       console.log('Created role:', createdRole);
-      
-      // If permissionIds are provided, add them to the role
-      if (permissionIds && permissionIds.length > 0) {
-        console.log('Adding permissions to role:', permissionIds);
-        
-        try {
-          // Add permissions to the role
-          await apiClient.post<Role>(`admin/roles/${createdRole.id}/permissions`, {
-            permissionIds
-          });
-          
-          // Get the updated role with permissions
-          const updatedRole = await apiClient.get<Role>(`admin/roles/${createdRole.id}`);
-          return updatedRole;
-        } catch (permissionError) {
-          console.error('Error adding permissions to role:', permissionError);
-          console.warn('Role was created but permissions could not be added');
-          
-          // Return the created role even if adding permissions failed
-          return createdRole;
-        }
-      }
-      
       return createdRole;
     } catch (error) {
       console.error('Error creating role:', error);
@@ -102,7 +86,8 @@ export const rolesApi = {
       console.log('Updating role with data:', data);
       
       // Update the role
-      const updatedRole = await apiClient.patch<Role, UpdateRoleDto>(`admin/roles/${id}`, data);
+      // Use object spread to create a new object that TypeScript will accept
+      const updatedRole = await apiClient.patch<Role>(`admin/roles/${id}`, { ...data });
       
       console.log('Updated role:', updatedRole);
       

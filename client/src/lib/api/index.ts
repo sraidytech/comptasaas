@@ -20,6 +20,7 @@ export type {
 } from './users';
 export type { 
   Role, 
+  RolePermission,
   CreateRoleDto, 
   UpdateRoleDto,
   // Remove Permission from roles export since we're exporting it from permissions.ts

@@ -45,7 +45,17 @@ export default function EditLivreTypePage() {
     error: fetchError,
     execute: fetchLivreType 
   } = useAsync<LivreType>(
-    async () => livreTypesApi.getById(livreTypeId),
+    async () => {
+      try {
+        console.log('Fetching livre type with ID:', livreTypeId);
+        const data = await livreTypesApi.getById(livreTypeId);
+        console.log('Fetched livre type:', data);
+        return data;
+      } catch (error) {
+        console.error('Error fetching livre type:', error);
+        throw error;
+      }
+    },
     true // Fetch immediately
   );
 
@@ -60,6 +70,8 @@ export default function EditLivreTypePage() {
   // Update form data when livre type data is loaded
   useEffect(() => {
     if (livreType) {
+      console.log('Setting form data from livre type:', livreType);
+      
       setFormData({
         name: livreType.name,
         description: livreType.description || '',
@@ -67,8 +79,14 @@ export default function EditLivreTypePage() {
       });
 
       // Set selected months
-      if (livreType.months && Array.isArray(livreType.months)) {
-        setSelectedMonths(livreType.months.map(m => m.month));
+      if (livreType.livreMonths && Array.isArray(livreType.livreMonths)) {
+        console.log('Setting selected months:', livreType.livreMonths);
+        const monthNumbers = livreType.livreMonths.map((m: { month: number }) => m.month);
+        console.log('Extracted month numbers:', monthNumbers);
+        setSelectedMonths(monthNumbers);
+      } else {
+        console.log('No months found in livre type or not an array');
+        setSelectedMonths([]);
       }
     }
   }, [livreType]);
@@ -107,9 +125,9 @@ export default function EditLivreTypePage() {
       
       if (result) {
         // Update months if they've changed
-        const currentMonths = livreType?.months?.map(m => m.month) || [];
-        const monthsToAdd = selectedMonths.filter(m => !currentMonths.includes(m));
-        const monthsToRemove = currentMonths.filter(m => !selectedMonths.includes(m));
+        const currentMonths = livreType?.livreMonths?.map((m: { month: number }) => m.month) || [];
+        const monthsToAdd = selectedMonths.filter((m: number) => !currentMonths.includes(m));
+        const monthsToRemove = currentMonths.filter((m: number) => !selectedMonths.includes(m));
         
         // Add new months
         if (monthsToAdd.length > 0) {
