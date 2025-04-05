@@ -27,74 +27,73 @@ export class RolesService {
         );
       }
 
-      console.log('Creating role without permissions first');
-      
-      // Create the role without permissions
-      const role = await this.prisma.role.create({
-        data: {
-          name: createRoleDto.name,
-          description: createRoleDto.description,
-        },
-      });
-      
-      console.log('Role created:', role);
-      
-      // Add permissions if provided
-      if (createRoleDto.permissionIds && createRoleDto.permissionIds.length > 0) {
-        console.log('Adding permissions to role:', createRoleDto.permissionIds);
+      // Use a transaction to ensure both role creation and permission assignments happen atomically
+      return await this.prisma.$transaction(async (prisma) => {
+        console.log('Starting transaction for role creation with permissions');
         
-        // Verify all permissions exist
-        const permissions = await this.prisma.permission.findMany({
-          where: {
-            id: {
-              in: createRoleDto.permissionIds
+        // Create the role without permissions first
+        const role = await prisma.role.create({
+          data: {
+            name: createRoleDto.name,
+            description: createRoleDto.description,
+          },
+        });
+        
+        console.log('Role created in transaction:', role);
+        
+        // Add permissions if provided
+        if (createRoleDto.permissionIds && createRoleDto.permissionIds.length > 0) {
+          console.log('Adding permissions to role in transaction:', createRoleDto.permissionIds);
+          
+          // Verify all permissions exist
+          const permissions = await prisma.permission.findMany({
+            where: {
+              id: {
+                in: createRoleDto.permissionIds
+              }
+            }
+          });
+          
+          console.log(`Found ${permissions.length} valid permissions out of ${createRoleDto.permissionIds.length} requested`);
+          
+          // Get valid permission IDs
+          const validPermissionIds = permissions.map(p => p.id);
+          
+          // Create role permissions in bulk
+          const rolePermissionsData = validPermissionIds.map(permissionId => ({
+            roleId: role.id,
+            permissionId
+          }));
+          
+          // Create all role permissions at once
+          await prisma.rolePermission.createMany({
+            data: rolePermissionsData,
+            skipDuplicates: true
+          });
+          
+          console.log(`Added ${validPermissionIds.length} permissions to role ${role.id} in transaction`);
+        }
+        
+        // Fetch the complete role with permissions to return
+        const completeRole = await prisma.role.findUnique({
+          where: { id: role.id },
+          include: {
+            rolePermissions: {
+              include: {
+                permission: true
+              }
             }
           }
         });
         
-        console.log(`Found ${permissions.length} valid permissions out of ${createRoleDto.permissionIds.length} requested`);
-        
-        // Get valid permission IDs
-        const validPermissionIds = permissions.map(p => p.id);
-        
-        // Create role permissions one by one
-        for (const permissionId of validPermissionIds) {
-          try {
-            await this.prisma.rolePermission.create({
-              data: {
-                roleId: role.id,
-                permissionId,
-              }
-            });
-            console.log(`Added permission ${permissionId} to role ${role.id}`);
-          } catch (err) {
-            console.error(`Error adding permission ${permissionId} to role ${role.id}:`, err);
-            // Continue with other permissions even if one fails
-          }
+        if (!completeRole) {
+          throw new Error(`Role with ID ${role.id} not found after creation`);
         }
         
-        console.log(`Added ${validPermissionIds.length} permissions to role ${role.id}`);
-      }
-      
-      // Fetch the updated role with permissions
-      const updatedRole = await this.prisma.role.findUnique({
-        where: { id: role.id },
-        include: {
-          rolePermissions: {
-            include: {
-              permission: true,
-            },
-          },
-        },
+        console.log(`Transaction completed successfully for role creation ${role.id}`);
+        
+        return completeRole;
       });
-      
-      if (!updatedRole) {
-        throw new Error(`Role with ID ${role.id} not found after creation`);
-      }
-      
-      console.log(`Role created successfully with ${updatedRole.rolePermissions.length} permissions`);
-      
-      return updatedRole;
     } catch (error) {
       console.error('Error in createRole:', error);
       throw error;

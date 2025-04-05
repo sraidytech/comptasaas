@@ -17,6 +17,7 @@ export class UsersService {
       where,
       include: {
         role: true,
+        tenant: true,
       },
     });
     return users;
@@ -27,6 +28,7 @@ export class UsersService {
       where: { id },
       include: {
         role: true,
+        tenant: true,
       },
     });
 
@@ -42,6 +44,7 @@ export class UsersService {
       where: { email },
       include: {
         role: true,
+        tenant: true,
       },
     });
     return user;
@@ -59,6 +62,7 @@ export class UsersService {
       },
       include: {
         role: true,
+        tenant: true,
       },
     });
     return user;
@@ -77,6 +81,7 @@ export class UsersService {
       data: updateUserDto,
       include: {
         role: true,
+        tenant: true,
       },
     });
     return user;

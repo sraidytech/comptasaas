@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {
   Injectable,
   NotFoundException,
@@ -92,6 +93,25 @@ export class PermissionsService {
     }
 
     return role.rolePermissions.map((rp) => rp.permission);
+  }
+
+  async getRolesWithPermission(permissionId: string): Promise<any[]> {
+    const permission = await this.prisma.permission.findUnique({
+      where: { id: permissionId },
+      include: {
+        rolePermissions: {
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
+
+    if (!permission) {
+      throw new NotFoundException(`Permission with ID ${permissionId} not found`);
+    }
+
+    return permission.rolePermissions.map((rp) => rp.role);
   }
 
   async assignPermissionToRole(

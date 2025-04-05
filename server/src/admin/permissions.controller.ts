@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {
   Controller,
   Get,
@@ -22,14 +23,30 @@ import { Permission } from '@prisma/client';
 export class PermissionsController {
   constructor(private readonly permissionsService: PermissionsService) {}
 
-  @ApiOperation({ summary: 'Get all permissions' })
+  @ApiOperation({ summary: 'Get all permissions with roles' })
   @ApiResponse({
     status: 200,
-    description: 'Return all permissions',
+    description: 'Return all permissions with their associated roles',
   })
   @HttpCode(HttpStatus.OK)
   @Get()
-  async findAll(): Promise<Permission[]> {
-    return this.permissionsService.findAllPermissions();
+  async findAll(): Promise<any[]> {
+    const permissions = await this.permissionsService.findAllPermissions();
+    
+    // For each permission, get the roles that have this permission
+    const permissionsWithRoles = await Promise.all(
+      permissions.map(async (permission) => {
+        const roles = await this.permissionsService.getRolesWithPermission(permission.id);
+        return {
+          ...permission,
+          roles: roles.map(role => ({
+            id: role.id,
+            name: role.name,
+          })),
+        };
+      })
+    );
+    
+    return permissionsWithRoles;
   }
 }

@@ -1,5 +1,11 @@
 import { apiClient } from './api-client';
 
+// Define the role interface for permissions
+export interface PermissionRole {
+  id: string;
+  name: string;
+}
+
 // Define the permission interface
 export interface Permission {
   id: string;
@@ -8,6 +14,7 @@ export interface Permission {
   category?: string;
   createdAt?: string;
   updatedAt?: string;
+  roles?: PermissionRole[];
 }
 
 // Permissions API functions

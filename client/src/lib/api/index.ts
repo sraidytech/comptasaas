@@ -37,4 +37,4 @@ export type {
   CreateLivreTypeDto, 
   UpdateLivreTypeDto 
 } from './livre-types';
-export type { Permission } from './permissions';
+export type { Permission, PermissionRole } from './permissions';

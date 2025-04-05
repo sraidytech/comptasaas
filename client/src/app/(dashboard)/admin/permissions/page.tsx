@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import { permissionsApi, Permission } from '@/lib/api';
+import { permissionsApi, Permission, PermissionRole } from '@/lib/api';
 import { useAsync } from '@/lib/hooks';
 
 // Mock data for fallback
@@ -155,22 +155,15 @@ export default function PermissionsPage() {
       try {
         // Process API data
         const processedPermissions = apiPermissions.map(permission => {
-          // For now, we'll assign mock roles since we don't have that info from the API
-          // In a real implementation, you would fetch role-permission mappings
-          const mockRoles = ['SUPER_ADMIN'];
-          if (!permission.name.includes('delete')) {
-            mockRoles.push('ADMIN');
-          }
-          if (permission.name.includes('read')) {
-            mockRoles.push('TEAM_MANAGER', 'EMPLOYEE');
-          }
+          // Extract role names from the roles array
+          const roleNames = permission.roles?.map((role: PermissionRole) => role.name) || [];
           
           return {
             id: permission.id,
             name: permission.name,
             description: permission.description || 'No description',
             category: categorizePermission(permission.name),
-            roles: mockRoles,
+            roles: roleNames,
           } as UIPermission;
         });
         setPermissions(processedPermissions);
