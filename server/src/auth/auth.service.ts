@@ -68,6 +68,11 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    // Check if user is active
+    if (!user.isActive) {
+      throw new UnauthorizedException('User account is inactive');
+    }
+
     const isPasswordValid = await this.passwordService.compare(
       password,
       user.password,
@@ -76,6 +81,12 @@ export class AuthService {
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
+
+    // Update last login timestamp
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() },
+    });
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...result } = user;
@@ -201,6 +212,17 @@ export class AuthService {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
+      // Check if user is active
+      if (!user.isActive) {
+        throw new UnauthorizedException('User account is inactive');
+      }
+
+      // Update last login timestamp
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { lastLogin: new Date() },
+      });
+
       const roleName = user.role?.name || 'user';
       const payload: JwtPayload = {
         email: user.email,
@@ -223,7 +245,8 @@ export class AuthService {
         access_token: accessToken,
         refresh_token: newRefreshToken,
       };
-    } catch {
+    } catch (error) {
+      console.error('Refresh token error:', error);
       throw new UnauthorizedException('Invalid refresh token');
     }
   }

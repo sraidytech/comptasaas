@@ -90,12 +90,11 @@ export default function TenantsPage() {
   // When tenants data changes, update the extended tenants
   useEffect(() => {
     if (apiTenants && Array.isArray(apiTenants) && apiTenants.length > 0) {
-      // In a real application, we would fetch the user and client counts for each tenant
-      // For now, we'll just add some dummy counts
+      // Use the actual counts from the API
       const extended = apiTenants.map(tenant => ({
         ...tenant,
-        userCount: Math.floor(Math.random() * 10) + 1, // Random count between 1-10
-        clientCount: Math.floor(Math.random() * 20) + 1, // Random count between 1-20
+        userCount: tenant._count?.users || 0,
+        clientCount: tenant._count?.clients || 0,
       }));
       setExtendedTenants(extended);
     } else {

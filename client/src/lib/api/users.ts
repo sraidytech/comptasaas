@@ -122,7 +122,8 @@ export const usersApi = {
   // Get user by ID
   getById: async (id: string): Promise<User> => {
     try {
-      return await apiClient.get<User>(`admin/users/${id}`);
+      // Use the users endpoint for all user operations
+      return await apiClient.get<User>(`users/${id}`);
     } catch (error) {
       console.error(`Error fetching user with ID ${id}:`, error);
       throw error;
@@ -145,7 +146,11 @@ export const usersApi = {
         isActive: data.isActive
       };
       
-      const createdUser = await apiClient.post<User>('admin/users', requestData);
+      // Use the admin/users endpoint for creating users from the admin panel
+      // This ensures the AdminUsersController is used which has the logic to create tenants for admin users
+      const endpoint = 'admin/users';
+      
+      const createdUser = await apiClient.post<User>(endpoint, requestData);
       
       console.log('Created user:', createdUser);
       return createdUser;
@@ -165,7 +170,8 @@ export const usersApi = {
   // Update a user
   update: async (id: string, data: UpdateUserDto): Promise<User> => {
     try {
-      return await apiClient.patch<User, UpdateUserDto>(`admin/users/${id}`, data);
+      // Use the users endpoint for all user operations
+      return await apiClient.patch<User, UpdateUserDto>(`users/${id}`, data);
     } catch (error) {
       console.error(`Error updating user with ID ${id}:`, error);
       throw error;
@@ -175,7 +181,8 @@ export const usersApi = {
   // Delete a user
   delete: async (id: string): Promise<void> => {
     try {
-      await apiClient.delete<void>(`admin/users/${id}`);
+      // Use the users endpoint for all user operations
+      await apiClient.delete<void>(`users/${id}`);
     } catch (error) {
       console.error(`Error deleting user with ID ${id}:`, error);
       throw error;
@@ -185,7 +192,8 @@ export const usersApi = {
   // Change user password
   changePassword: async (id: string, currentPassword: string, newPassword: string): Promise<void> => {
     try {
-      await apiClient.post<void, ChangePasswordDto>(`admin/users/${id}/change-password`, {
+      // Use the users endpoint for all user operations
+      await apiClient.post<void, ChangePasswordDto>(`users/${id}/change-password`, {
         currentPassword,
         newPassword,
       });
@@ -198,7 +206,8 @@ export const usersApi = {
   // Activate or deactivate a user
   setActiveStatus: async (id: string, isActive: boolean): Promise<User> => {
     try {
-      return await apiClient.patch<User, UpdateStatusDto>(`admin/users/${id}/status`, { isActive });
+      // Use the users endpoint for all user operations
+      return await apiClient.patch<User, UpdateStatusDto>(`users/${id}/status`, { isActive });
     } catch (error) {
       console.error(`Error changing status for user with ID ${id}:`, error);
       throw error;

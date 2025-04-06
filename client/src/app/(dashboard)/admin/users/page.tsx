@@ -190,8 +190,38 @@ export default function UsersPage() {
     
     try {
       // Check if the date is valid
-      const date = new Date(dateString);
+      // Try to handle ISO string or any other valid date format
+      let date: Date;
+      
+      // If it's already a valid ISO string, use it directly
+      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(dateString)) {
+        date = new Date(dateString);
+      } else {
+        // Try to parse other date formats
+        // Split by common separators and try to construct a valid date
+        const parts = dateString.split(/[-/.: ]/g).filter(Boolean);
+        if (parts.length >= 3) {
+          // Assume year, month, day format if we have at least 3 parts
+          const year = parseInt(parts[0].length === 4 ? parts[0] : parts[2]);
+          const month = parseInt(parts[1]) - 1; // JS months are 0-indexed
+          const day = parseInt(parts[0].length === 4 ? parts[2] : parts[0]);
+          
+          date = new Date(year, month, day);
+          
+          // Add time if available
+          if (parts.length >= 6) {
+            date.setHours(parseInt(parts[3]));
+            date.setMinutes(parseInt(parts[4]));
+            date.setSeconds(parseInt(parts[5]));
+          }
+        } else {
+          // If we can't parse it, try the default Date constructor
+          date = new Date(dateString);
+        }
+      }
+      
       if (isNaN(date.getTime())) {
+        console.warn(`Invalid date format: ${dateString}`);
         return 'Date invalide';
       }
       
@@ -203,7 +233,7 @@ export default function UsersPage() {
         minute: '2-digit',
       }).format(date);
     } catch (error) {
-      console.error('Error formatting date:', error);
+      console.error('Error formatting date:', error, dateString);
       return 'Date invalide';
     }
   };

@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -25,13 +26,19 @@ import { CreateUserDto, UpdateUserDto } from '../users/dto';
 import { User } from '../users/entities';
 import { FilterUsersDto } from './dto';
 import { PaginatedUsers, PaginatedUsersResponse } from '../common/interfaces/pagination.interface';
+import { TenantsService } from './tenants.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @ApiTags('admin/users')
 @ApiBearerAuth()
 @UseGuards(SuperAdminGuard)
 @Controller('admin/users')
 export class AdminUsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly tenantsService: TenantsService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @ApiOperation({
     summary: 'Get all users with filtering, sorting, and pagination',
@@ -107,6 +114,30 @@ export class AdminUsersController {
   @HttpCode(HttpStatus.CREATED)
   @Post()
   async create(@Body() createUserDto: CreateUserDto): Promise<User> {
+    // Check if the user being created has an ADMIN role
+    if (createUserDto.roleId) {
+      const role = await this.prisma.role.findUnique({
+        where: { id: createUserDto.roleId },
+      });
+
+      // If the role is ADMIN and no tenantId is provided, create a new tenant
+      if (role?.name === 'ADMIN' && !createUserDto.tenantId) {
+        try {
+          // Create a new tenant with the username as the tenant name
+          const tenantName = createUserDto.username || 'New Tenant';
+          const tenant = await this.tenantsService.create({
+            name: tenantName,
+            description: `Tenant for ${createUserDto.username}`,
+          });
+
+          // Assign the new tenant ID to the user
+          createUserDto.tenantId = tenant.id;
+        } catch (error) {
+          throw new BadRequestException(`Failed to create tenant: ${error.message}`);
+        }
+      }
+    }
+
     return this.usersService.create(createUserDto);
   }
 

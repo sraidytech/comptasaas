@@ -7,6 +7,12 @@ export interface Tenant {
   description?: string;
   createdAt: string;
   updatedAt: string;
+  _count?: {
+    users: number;
+    clients: number;
+    declarations: number;
+    livres: number;
+  };
 }
 
 // Define the create tenant DTO

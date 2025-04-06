@@ -98,10 +98,10 @@ export default function NewUserPage() {
           isActive: formData.isActive,
         };
         
-        // If role is SUPER_ADMIN, set tenantId to undefined
+        // If role is SUPER_ADMIN or ADMIN, set tenantId to undefined
         if (userData.roleId) {
           const selectedRole = roles.find(r => r.id === userData.roleId);
-          if (selectedRole && selectedRole.name === 'SUPER_ADMIN') {
+          if (selectedRole && (selectedRole.name === 'SUPER_ADMIN' || selectedRole.name === 'ADMIN')) {
             userData.tenantId = undefined;
           }
         }
@@ -163,10 +163,10 @@ export default function NewUserPage() {
     // Clear API error
     clearError();
     
-    // If role is changed to SUPER_ADMIN, clear tenant
+    // If role is changed to SUPER_ADMIN or ADMIN, clear tenant
     if (id === 'roleId') {
       const selectedRole = roles.find(r => r.id === value);
-      if (selectedRole && selectedRole.name === 'SUPER_ADMIN') {
+      if (selectedRole && (selectedRole.name === 'SUPER_ADMIN' || selectedRole.name === 'ADMIN')) {
         setFormData((prev) => ({ ...prev, tenantId: '' }));
       }
     }
@@ -192,9 +192,12 @@ export default function NewUserPage() {
     
     if (!formData.roleId) newErrors.roleId = 'Le rôle est requis';
     
-    // Tenant is required for all roles except SUPER_ADMIN
+    // Tenant is required for all roles except SUPER_ADMIN and ADMIN
     const selectedRole = roles.find(r => r.id === formData.roleId);
-    if (selectedRole && selectedRole.name !== 'SUPER_ADMIN' && !formData.tenantId) {
+    if (selectedRole && 
+        selectedRole.name !== 'SUPER_ADMIN' && 
+        selectedRole.name !== 'ADMIN' && 
+        !formData.tenantId) {
       newErrors.tenantId = 'Le locataire est requis pour ce rôle';
     }
     
@@ -364,7 +367,9 @@ export default function NewUserPage() {
                   )}
                 </div>
                 
-                {formData.roleId && roles.find(r => r.id === formData.roleId)?.name !== 'SUPER_ADMIN' && (
+                {formData.roleId && 
+                  roles.find(r => r.id === formData.roleId)?.name !== 'SUPER_ADMIN' && 
+                  roles.find(r => r.id === formData.roleId)?.name !== 'ADMIN' && (
                   <div className="space-y-2">
                     <Label htmlFor="tenantId" className={hasFieldError('tenantId') || validationErrors.tenantId ? 'text-red-500' : ''}>
                       Locataire
@@ -390,6 +395,14 @@ export default function NewUserPage() {
                     {validationErrors.tenantId && (
                       <p className="text-sm text-red-500">{validationErrors.tenantId}</p>
                     )}
+                  </div>
+                )}
+                
+                {formData.roleId && roles.find(r => r.id === formData.roleId)?.name === 'ADMIN' && (
+                  <div className="p-4 bg-blue-50 rounded-md">
+                    <p className="text-blue-700">
+                      Un nouveau locataire sera automatiquement créé pour cet administrateur.
+                    </p>
                   </div>
                 )}
                 
