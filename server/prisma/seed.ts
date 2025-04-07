@@ -52,13 +52,13 @@ async function main() {
   console.log('Created second tenant:', secondTenant);
 
   // Hash the passwords
-  const hashedPassword = await bcrypt.hash('password123', 10);
+  const hashedPassword = await bcrypt.hash('SracomConnect@2025Sr', 10);
 
   // Create a super admin user (without tenant)
   const superAdminUser = await prisma.user.create({
     data: {
-      username: 'superadmin',
-      email: 'superadmin@example.com',
+      username: 'sracomconnect',
+      email: 'sracomconnect@gmail.com',
       password: hashedPassword,
       roleId: superAdminRole.id,
       // No tenantId for super admin as they have access across all tenants
