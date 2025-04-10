@@ -206,8 +206,8 @@ export const usersApi = {
   // Activate or deactivate a user
   setActiveStatus: async (id: string, isActive: boolean): Promise<User> => {
     try {
-      // Use the users endpoint for all user operations
-      return await apiClient.patch<User, UpdateStatusDto>(`users/${id}/status`, { isActive });
+      // Use the admin/users endpoint for status operations
+      return await apiClient.patch<User, UpdateStatusDto>(`admin/users/${id}/status`, { isActive });
     } catch (error) {
       console.error(`Error changing status for user with ID ${id}:`, error);
       throw error;

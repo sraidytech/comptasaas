@@ -44,7 +44,30 @@ export async function login(formData: LoginFormData): Promise<{
       refreshToken: refresh_token
     };
   } catch (error) {
-    console.error('API login failed, falling back to mock implementation:', error);
+    console.error('API login failed:', error);
+    
+    // Check for specific error messages from the API
+    if (error && typeof error === 'object' && 'response' in error && 
+        error.response && typeof error.response === 'object' && 'data' in error.response) {
+      const responseData = error.response.data as { message?: string };
+      
+      // Check for tenant inactive message
+      if (responseData.message && responseData.message.includes('Tenant account is inactive')) {
+        throw new Error('Tenant account is inactive');
+      }
+      
+      // Check for user inactive message
+      if (responseData.message && responseData.message.includes('User account is inactive')) {
+        throw new Error('User account is inactive');
+      }
+      
+      // If there's a message in the response, use it
+      if (responseData.message) {
+        throw new Error(responseData.message);
+      }
+    }
+    
+    // Fallback to mock implementation for development/testing
     
     // Fallback to mock implementation for development/testing
     // Check if the user is the super admin

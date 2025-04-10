@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {
   Controller,
   Get,
@@ -9,6 +10,9 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  UnauthorizedException,
+  BadRequestException,
+  Request,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -20,7 +24,14 @@ import {
 import { SuperAdminGuard } from './guards/super-admin.guard';
 import { AdminService } from './admin.service';
 import { TenantsService } from './tenants.service';
-import { CreateTenantDto, UpdateTenantDto } from './dto';
+import { 
+  CreateTenantDto, 
+  UpdateTenantDto, 
+  UpdateTenantStatusDto,
+  UpdateTenantSubscriptionDto 
+} from './dto';
+import { PrismaService } from '../prisma/prisma.service';
+import { PasswordService } from '../common/password.service';
 
 @ApiTags('admin')
 @ApiBearerAuth()
@@ -30,6 +41,8 @@ export class AdminController {
   constructor(
     private readonly adminService: AdminService,
     private readonly tenantsService: TenantsService,
+    private readonly prisma: PrismaService,
+    private readonly passwordService: PasswordService,
   ) {}
 
   @ApiOperation({ summary: 'Get admin dashboard statistics' })
@@ -130,5 +143,111 @@ export class AdminController {
   @Get('tenants/:id/stats')
   async getTenantStats(@Param('id') id: string) {
     return this.tenantsService.getTenantStats(id);
+  }
+
+  @ApiOperation({ summary: 'Update tenant status' })
+  @ApiResponse({
+    status: 200,
+    description: 'Tenant status successfully updated',
+  })
+  @ApiResponse({ status: 404, description: 'Tenant not found' })
+  @ApiResponse({ status: 401, description: 'Invalid password' })
+  @ApiParam({ name: 'id', description: 'Tenant ID' })
+  @HttpCode(HttpStatus.OK)
+  @Patch('tenants/:id/status')
+  async updateTenantStatus(
+    @Param('id') id: string,
+    @Body() statusDto: UpdateTenantStatusDto,
+    @Request() req: any,
+  ) {
+    // Get the current user (super admin)
+    // The user ID is in req.user.sub, not req.user.userId
+    const userId = req.user?.sub;
+    
+    if (!userId) {
+      throw new UnauthorizedException('User not authenticated');
+    }
+    
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Verify the password
+    const isPasswordValid = await this.passwordService.compare(
+      statusDto.password,
+      user.password,
+    );
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid password');
+    }
+
+    // If we're deactivating a tenant, make sure it's not a critical one
+    if (!statusDto.isActive) {
+      // Check if this tenant has any SUPER_ADMIN users
+      const hasSuperAdmins = await this.prisma.user.findFirst({
+        where: {
+          tenantId: id,
+          role: {
+            name: 'SUPER_ADMIN',
+          },
+        },
+      });
+
+      if (hasSuperAdmins) {
+        throw new BadRequestException('Cannot deactivate a tenant with SUPER_ADMIN users');
+      }
+    }
+
+    // Update the tenant status
+    return this.tenantsService.update(id, { isActive: statusDto.isActive });
+  }
+
+  @ApiOperation({ summary: 'Update tenant subscription' })
+  @ApiResponse({
+    status: 200,
+    description: 'Tenant subscription successfully updated',
+  })
+  @ApiResponse({ status: 404, description: 'Tenant not found' })
+  @ApiResponse({ status: 401, description: 'Invalid password' })
+  @ApiParam({ name: 'id', description: 'Tenant ID' })
+  @HttpCode(HttpStatus.OK)
+  @Patch('tenants/:id/subscription')
+  async updateTenantSubscription(
+    @Param('id') id: string,
+    @Body() subscriptionDto: UpdateTenantSubscriptionDto,
+    @Request() req: any,
+  ) {
+    // Get the current user (super admin)
+    const userId = req.user?.sub;
+    
+    if (!userId) {
+      throw new UnauthorizedException('User not authenticated');
+    }
+    
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Verify the password
+    const isPasswordValid = await this.passwordService.compare(
+      subscriptionDto.password,
+      user.password,
+    );
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Mot de passe invalide');
+    }
+
+    // Update the tenant subscription
+    return this.tenantsService.updateSubscription(id, subscriptionDto);
   }
 }

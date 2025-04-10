@@ -203,7 +203,26 @@ export class AdminUsersController {
     @Param('id') id: string,
     @Body() statusDto: { isActive: boolean },
   ): Promise<User> {
-    return this.usersService.update(id, { isActive: statusDto.isActive });
+    try {
+      // Check if the user exists
+      const user = await this.usersService.findOne(id);
+      
+      // Check if the user is a SUPER_ADMIN
+      const role = await this.prisma.role.findUnique({
+        where: { id: user.roleId },
+      });
+      
+      if (role?.name === 'SUPER_ADMIN' && !statusDto.isActive) {
+        throw new BadRequestException('Cannot deactivate a SUPER_ADMIN user');
+      }
+      
+      return this.usersService.update(id, { isActive: statusDto.isActive });
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException(`Error changing user status: ${error.message}`);
+    }
   }
 
   @ApiOperation({ summary: 'Change user password' })

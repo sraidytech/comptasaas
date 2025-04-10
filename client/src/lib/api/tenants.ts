@@ -1,10 +1,37 @@
 import { apiClient } from './api-client';
 
+// Define subscription plan enum
+export enum SubscriptionPlan {
+  NONE = 'NONE',
+  SIX_MONTHS = 'SIX_MONTHS',
+  ONE_YEAR = 'ONE_YEAR',
+}
+
+// Define payment status enum
+export enum PaymentStatus {
+  UNPAID = 'UNPAID',
+  PENDING = 'PENDING',
+  PAID = 'PAID',
+  EXPIRED = 'EXPIRED',
+}
+
+// Define payment method enum
+export enum PaymentMethod {
+  BANK_TRANSFER = 'BANK_TRANSFER',
+}
+
 // Define the tenant interface
 export interface Tenant {
   id: string;
   name: string;
   description?: string;
+  isActive: boolean;
+  subscriptionPlan: SubscriptionPlan;
+  subscriptionStart?: string;
+  subscriptionEnd?: string;
+  paymentStatus: PaymentStatus;
+  paymentMethod: PaymentMethod;
+  paymentReference?: string;
   createdAt: string;
   updatedAt: string;
   _count?: {
@@ -19,12 +46,31 @@ export interface Tenant {
 export interface CreateTenantDto {
   name: string;
   description?: string;
+  isActive?: boolean;
 }
 
 // Define the update tenant DTO
 export interface UpdateTenantDto {
   name?: string;
   description?: string;
+  isActive?: boolean;
+}
+
+// Define the update tenant status DTO
+export interface UpdateTenantStatusDto {
+  isActive: boolean;
+  password: string;
+}
+
+// Define the update tenant subscription DTO
+export interface UpdateTenantSubscriptionDto {
+  subscriptionPlan: SubscriptionPlan;
+  subscriptionStart: string;
+  subscriptionEnd: string;
+  paymentStatus: PaymentStatus;
+  paymentMethod: PaymentMethod;
+  paymentReference?: string;
+  password: string;
 }
 
 // Tenant API functions
@@ -57,7 +103,8 @@ export const tenantsApi = {
       // Convert the DTO to a Record<string, unknown> to satisfy TypeScript
       const requestData: Record<string, unknown> = {
         name: data.name,
-        description: data.description
+        description: data.description,
+        isActive: data.isActive !== undefined ? data.isActive : true
       };
       
       const createdTenant = await apiClient.post<Tenant>('admin/tenants', requestData);
@@ -93,6 +140,26 @@ export const tenantsApi = {
       await apiClient.delete<void>(`admin/tenants/${id}`);
     } catch (error) {
       console.error(`Error deleting tenant with ID ${id}:`, error);
+      throw error;
+    }
+  },
+  
+  // Update tenant status with password confirmation
+  updateStatus: async (id: string, data: UpdateTenantStatusDto): Promise<Tenant> => {
+    try {
+      return await apiClient.patch<Tenant, UpdateTenantStatusDto>(`admin/tenants/${id}/status`, data);
+    } catch (error) {
+      console.error(`Error updating tenant status with ID ${id}:`, error);
+      throw error;
+    }
+  },
+  
+  // Update tenant subscription with password confirmation
+  updateSubscription: async (id: string, data: UpdateTenantSubscriptionDto): Promise<Tenant> => {
+    try {
+      return await apiClient.patch<Tenant, UpdateTenantSubscriptionDto>(`admin/tenants/${id}/subscription`, data);
+    } catch (error) {
+      console.error(`Error updating tenant subscription with ID ${id}:`, error);
       throw error;
     }
   },

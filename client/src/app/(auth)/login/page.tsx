@@ -42,7 +42,18 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue lors de la connexion');
+      
+      // Check for specific error messages
+      if (err instanceof Error) {
+        if (err.message.includes('Tenant account is inactive')) {
+          setError('Votre compte entreprise est inactif. Veuillez contacter l\'administrateur.');
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError('Une erreur est survenue lors de la connexion');
+      }
+      
       setIsLoading(false);
     }
   };

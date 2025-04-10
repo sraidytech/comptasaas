@@ -12,11 +12,18 @@ datasource db {
 
 // Tenant model for multi-tenancy
 model Tenant {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String           @id @default(uuid())
+  name              String
+  description       String?
+  isActive          Boolean          @default(true)
+  subscriptionPlan  SubscriptionPlan @default(NONE)
+  subscriptionStart DateTime?
+  subscriptionEnd   DateTime?
+  paymentStatus     PaymentStatus    @default(UNPAID)
+  paymentMethod     PaymentMethod    @default(BANK_TRANSFER)
+  paymentReference  String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 
   // Relationships
   users        User[]
@@ -267,6 +274,23 @@ model Task {
 }
 
 // Enums
+enum SubscriptionPlan {
+  NONE
+  SIX_MONTHS
+  ONE_YEAR
+}
+
+enum PaymentStatus {
+  UNPAID
+  PENDING
+  PAID
+  EXPIRED
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+}
+
 enum ClientType {
   PERSONNE_MORALE
   PERSONNE_PHYSIQUE
