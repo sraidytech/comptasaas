@@ -244,16 +244,30 @@ model Livre {
 
 // Attachment model
 model Attachment {
-  id            String  @id @default(uuid())
+  id            String        @id @default(uuid())
   declarationId String?
   livreId       String?
   fileName      String
   fileUrl       String
-  createdAt     DateTime @default(now())
+  fileType      FileType
+  fileSize      Int
+  mimeType      String
+  description   String?
+  uploadedBy    String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   // Relationships
-  declaration   Declaration? @relation(fields: [declarationId], references: [id])
-  livre         Livre?       @relation(fields: [livreId], references: [id])
+  declaration   Declaration?  @relation(fields: [declarationId], references: [id])
+  livre         Livre?        @relation(fields: [livreId], references: [id])
+}
+
+// FileType enum
+enum FileType {
+  PDF
+  AUDIO
+  IMAGE
+  OTHER
 }
 
 // Task model

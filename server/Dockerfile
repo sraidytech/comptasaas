@@ -34,9 +34,9 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma/dist ./prisma/dist
 
 # Install production dependencies, ts-node for seeding, and rebuild bcrypt for the current architecture
-RUN npm ci --only=production && \
+RUN npm install && \
     npm install -g ts-node typescript && \
-    npm install --save-dev @types/bcrypt && \
+    npm install --save-dev @types/bcrypt @types/multer && \
     npm rebuild bcrypt --build-from-source
 
 # Generate Prisma client

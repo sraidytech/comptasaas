@@ -8,6 +8,7 @@ export { rolesApi } from './roles';
 export { declarationTypesApi } from './declaration-types';
 export { livreTypesApi } from './livre-types';
 export { permissionsApi } from './permissions';
+export { attachmentsApi } from './attachments';
 
 // Export interfaces
 export type { Tenant, CreateTenantDto, UpdateTenantDto } from './tenants';
@@ -40,3 +41,4 @@ export type {
   UpdateLivreTypeDto 
 } from './livre-types';
 export type { Permission, PermissionRole } from './permissions';
+export type { Attachment, UploadAttachmentParams } from './attachments';

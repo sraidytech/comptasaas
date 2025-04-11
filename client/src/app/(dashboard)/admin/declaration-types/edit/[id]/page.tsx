@@ -16,10 +16,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { declarationTypesApi, UpdateDeclarationTypeDto, DeclarationType } from '@/lib/api';
 import { useAsync, useApiError } from '@/lib/hooks';
+import { DeclarationAttachments } from '@/components/attachments';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function EditDeclarationTypePage() {
   const router = useRouter();
@@ -206,15 +208,23 @@ export default function EditDeclarationTypePage() {
           </CardFooter>
         </Card>
       ) : (
-        <Card className="max-w-2xl">
-          <CardHeader>
-            <CardTitle>Informations du Type de Déclaration</CardTitle>
-            <CardDescription>
-              Modifiez les détails du type de déclaration
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form id="declaration-type-form" onSubmit={handleSubmit} className="space-y-6">
+        <div className="w-full max-w-4xl">
+          <Tabs defaultValue="details" className="w-full">
+            <TabsList className="mb-4">
+              <TabsTrigger value="details">Informations</TabsTrigger>
+              <TabsTrigger value="attachments">Pièces jointes</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="details">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Informations du Type de Déclaration</CardTitle>
+                  <CardDescription>
+                    Modifiez les détails du type de déclaration
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form id="declaration-type-form" onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="name" className={hasFieldError('name') ? 'text-red-500' : ''}>
                   Nom du Type de Déclaration
@@ -282,28 +292,50 @@ export default function EditDeclarationTypePage() {
                   ))}
                 </div>
               </div>
-            </form>
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button variant="outline" asChild>
-              <Link href="/admin/declaration-types">Annuler</Link>
-            </Button>
-            <Button 
-              type="submit" 
-              form="declaration-type-form" 
-              disabled={updating}
-            >
-              {updating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Mise à jour en cours...
-                </>
-              ) : (
-                'Mettre à jour le Type de Déclaration'
-              )}
-            </Button>
-          </CardFooter>
-        </Card>
+                  </form>
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                  <Button variant="outline" asChild>
+                    <Link href="/admin/declaration-types">Annuler</Link>
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    form="declaration-type-form" 
+                    disabled={updating}
+                  >
+                    {updating ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Mise à jour en cours...
+                      </>
+                    ) : (
+                      'Mettre à jour le Type de Déclaration'
+                    )}
+                  </Button>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="attachments">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Pièces jointes
+                  </CardTitle>
+                  <CardDescription>
+                    Gérez les pièces jointes associées à ce type de déclaration
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {declarationType && (
+                    <DeclarationAttachments declarationId={declarationTypeId} />
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
       )}
     </div>
   );

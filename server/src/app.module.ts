@@ -11,6 +11,7 @@ import { SharedAuthModule } from './auth/shared';
 import { TenantIsolationMiddleware } from './common';
 import { ClientsModule } from './clients/clients.module';
 import { AdminModule } from './admin/admin.module';
+import { AttachmentsModule } from './attachments/attachments.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AdminModule } from './admin/admin.module';
     UsersControllerModule,
     ClientsModule,
     AdminModule,
+    AttachmentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

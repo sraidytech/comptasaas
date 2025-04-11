@@ -146,8 +146,11 @@ class ApiClient {
       return url;
     }
     
-    // Otherwise, add the API prefix
-    return `${API_PREFIX}/${url}`;
+    // Remove leading slash if present
+    const cleanUrl = url.startsWith('/') ? url.substring(1) : url;
+    
+    // Add the API prefix
+    return `${API_PREFIX}/${cleanUrl}`;
   }
 
   // Generic request method
